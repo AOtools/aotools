@@ -6,7 +6,7 @@ of optical proagation
 '''
 
 import numpy
-from . import fft
+from .. import fft
 
 def angularSpectrum(inputComplexAmp, wvl, inputSpacing, outputSpacing, z):
     """
@@ -120,7 +120,10 @@ def twoStepFresnel(Uin, wvl, d1, d2, z):
     m = float(d2)/d1
 
     #intermediate plane
-    Dz1  = z / (1-m) #propagation distance
+    try:
+        Dz1  = z / (1-m) #propagation distance
+    except ZeroDivisionError:
+        Dz1 = z / (1+m)
     d1a = wvl * abs(Dz1) / (N*d1) #coordinates
     x1a, y1a = numpy.meshgrid( numpy.arange( -N/2.,N/2.) * d1a,
                               numpy.arange( -N/2.,N/2.) * d1a )

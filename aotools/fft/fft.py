@@ -74,10 +74,9 @@ def ift2(DATA, delta_f):
     N = DATA.shape[0]
     g = numpy.fft.ifftshift(
             numpy.fft.ifft2(
-                    numpy.fft.ifftshift(DATA))) * (N * delta_f)*2
+                    numpy.fft.ifftshift(DATA))) * (N * delta_f)**2
 
     return g
-
 
 def rft(data, delta):
     """
