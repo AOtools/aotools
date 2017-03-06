@@ -6,7 +6,7 @@ of optical proagation
 '''
 
 import numpy
-from .. import fft
+from .. import fouriertransform
 
 def angularSpectrum(inputComplexAmp, wvl, inputSpacing, outputSpacing, z):
     """
@@ -56,8 +56,8 @@ def angularSpectrum(inputComplexAmp, wvl, inputSpacing, outputSpacing, z):
     Q3 = numpy.exp(1j * k/2. * (mag-1)/(mag*z) * r2sq)
 
     #Compute propagated field
-    outputComplexAmp = Q3 * fft.ift2( 
-                    Q2 * fft.ft2(Q1 * inputComplexAmp/mag,inputSpacing), df1)
+    outputComplexAmp = Q3 * fouriertransform.ift2( 
+                    Q2 * fouriertransform.ft2(Q1 * inputComplexAmp/mag,inputSpacing), df1)
     return outputComplexAmp
 
 
@@ -88,7 +88,7 @@ def oneStepFresnel(Uin, wvl, d1, z):
     #evaluate Fresnel-Kirchoff integral
     A = 1/(1j*wvl*z)
     B = numpy.exp( 1j * k/(2*z) * (x2**2 + y2**2))
-    C = fft.ft2(Uin *numpy.exp(1j * k/(2*z) * (x1**2+y1**2)), d1)
+    C = fouriertransform.ft2(Uin *numpy.exp(1j * k/(2*z) * (x1**2+y1**2)), d1)
 
     Uout = A*B*C
 
@@ -131,7 +131,7 @@ def twoStepFresnel(Uin, wvl, d1, d2, z):
     #Evaluate Fresnel-Kirchhoff integral
     A = 1./(1j * wvl * Dz1)
     B = numpy.exp(1j * k/(2*Dz1) * (x1a**2 + y1a**2) )
-    C = fft.ft2(Uin * numpy.exp(1j * k/(2*Dz1) * (x1**2 + y1**2)), d1)
+    C = fouriertransform.ft2(Uin * numpy.exp(1j * k/(2*Dz1) * (x1**2 + y1**2)), d1)
     Uitm = A*B*C
     #Observation plane
     Dz2 = z - Dz1
@@ -143,7 +143,7 @@ def twoStepFresnel(Uin, wvl, d1, d2, z):
     #Evaluate the Fresnel diffraction integral
     A = 1. / (1j * wvl * Dz2)
     B = numpy.exp( 1j * k/(2 * Dz2) * (x2**2 + y2**2) )
-    C = fft.ft2(Uitm * numpy.exp( 1j * k/(2*Dz2) * (x1a**2 + y1a**2)), d1a)
+    C = fouriertransform.ft2(Uitm * numpy.exp( 1j * k/(2*Dz2) * (x1a**2 + y1a**2)), d1a)
     Uout = A*B*C
 
     return Uout
@@ -176,6 +176,6 @@ def lensAgainst(Uin, wvl, d1, f):
 
     #Evaluate the Fresnel-Kirchoff integral but with the quadratic
     #phase factor inside cancelled by the phase of the lens
-    Uout = numpy.exp( 1j*k/(2*f) * (x2**2 + y2**2) )/ (1j*wvl*f) * fft.ft2( Uin, d1)
+    Uout = numpy.exp( 1j*k/(2*f) * (x2**2 + y2**2) )/ (1j*wvl*f) * fouriertransform.ft2( Uin, d1)
 
     return Uout
