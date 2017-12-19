@@ -35,3 +35,26 @@ def phase_covariance(r, r0, L0):
     cov = A * B1 * B2 * C
 
     return cov
+
+def calcSeeing(r0,lam,l0,r0IsAt500nm=1):
+    """Compute seeing from r0, wavelength at which to compute seeing, and L0.
+    Note, L0 should be defined at lam.
+    """
+    
+    
+    if type(lam)==type(0.) and lam>1:#probably in nm.  convert to m
+        lam=lam*1e-09
+    if type(lam)==numpy.ndarray and lam[0]>1:
+        lam=lam*1e-9
+    if r0>1:#probably in cm.  Convert to m.
+        r0=r0/100.
+
+    if r0IsAt500nm:
+        r0*=(lam/500e-9)**(6./5)
+
+    seeing = 0.976* lam/r0*180/numpy.pi*3600
+
+    if l0!=0:#outer scale is defined...
+        seeing = seeing * numpy.sqrt(1-2.183*(r0/l0)**0.356)
+    return seeing
+    
