@@ -4,7 +4,7 @@ General equations and definitions describing turbulence statistics
 import numpy
 from scipy.special import gamma, kv
 
-__all__ = ["phase_covariance"]
+__all__ = ["phase_covariance","calc_seeing"]
 
 def phase_covariance(r, r0, L0):
     """
@@ -36,18 +36,23 @@ def phase_covariance(r, r0, L0):
 
     return cov
 
-def calcSeeing(r0,lam,l0,r0IsAt500nm=1):
+
+def calc_seeing(r0,lam,l0,r0IsAt500nm=1):
     """Compute seeing from r0, wavelength at which to compute seeing, and L0.
-    Note, L0 should be defined at lam.
+    Note, L0 should be defined at lame.
+
+    Parameters:
+       r0 (float, ndarray): Frieds parameter in m.
+       lam (float, ndarray): Wavelength in nm.
+       l0 (float, ndarray): Outer scale in m.
+       r0IsAt500nm (int): Flag, defines where r0 is defined.
     """
     
-    
-    if type(lam)==type(0.) and lam>1:#probably in nm.  convert to m
-        lam=lam*1e-09
-    if type(lam)==numpy.ndarray and lam[0]>1:
-        lam=lam*1e-9
-    if r0>1:#probably in cm.  Convert to m.
-        r0=r0/100.
+    lam=lam*1e-9#convert to m
+    if type(lam)==type(0.) and lam<1e-10:#probably in m already.
+        print "Warning: Wavelength should be defined in nm"
+    if r0>2:#probably in cm.  Convert to m.
+        print "Warning - r0 might be defined in cm - needs to be in m"
 
     if r0IsAt500nm:
         r0*=(lam/500e-9)**(6./5)
