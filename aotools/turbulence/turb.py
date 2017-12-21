@@ -50,9 +50,9 @@ def calc_seeing(r0,lam,l0,r0IsAt500nm=1):
     
     lam=lam*1e-9#convert to m
     if type(lam)==type(0.) and lam<1e-10:#probably in m already.
-        print "Warning: Wavelength should be defined in nm"
+        print( "Warning: Wavelength should be defined in nm")
     if r0>2:#probably in cm.  Convert to m.
-        print "Warning - r0 might be defined in cm - needs to be in m"
+        print( "Warning - r0 might be defined in cm - needs to be in m")
 
     if r0IsAt500nm:
         r0*=(lam/500e-9)**(6./5)
