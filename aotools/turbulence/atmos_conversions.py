@@ -29,18 +29,37 @@ def cn2_to_r0(cn2,lamda=500.E-9):
     r0=(0.423*(2*numpy.pi/lamda)**2*cn2)**(-3./5.)
     return r0
 
-def r0_to_seeing(r0,lamda=500.E-9):
+def r0_to_seeing(r0,lamda=500.E-9,L0=None,r0IsAt500nm=True):
     """
-    Calculates the seeing angle from r0
+    Calculates the seeing angle from r0 and L0 (optionally)
 
     Parameters:
-        r0 (float): Freid's parameter in cm
-        lamda : wavelength
+        r0 (float): Freid's parameter in m
+        lamda : wavelength in m
+        L0 (float): Outer scale in m.
+        r0IsAt500nm (Flag): Whether r0 is defined at 500nm.
 
     Returns:
         seeing angle in arcseconds
     """
-    return (0.98*lamda/r0)*180.*3600./numpy.pi
+
+    
+    if type(lam)==type(0.) and lam>1:#probably in nm
+        print( "Warning: Wavelength should be defined in m")
+    if r0>2:#probably in cm.  Convert to m.
+        print( "Warning - r0 might be defined in cm - needs to be in m")
+
+    if r0IsAt500nm:
+        r0*=(lam/500e-9)**(6./5)
+
+    seeing = 0.976* lam/r0*180/numpy.pi*3600
+
+    if l0!=0:#outer scale is defined...
+        seeing = seeing * numpy.sqrt(1-2.183*(r0/l0)**0.356)
+    return seeing
+    
+
+    #return (0.98*lamda/r0)*180.*3600./numpy.pi
 
 def coherenceTime(cn2,v,lamda=500.E-9):
     """
