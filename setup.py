@@ -23,6 +23,8 @@ setup(
     install_requires=[
         'numpy',
         'scipy',
+        'astropy',
+        'astroquery',
     ],
     classifiers=[
         "Programming Language :: Python",
