@@ -27,7 +27,8 @@ before_install:
 - ls
 - conda update --yes conda
 install:
-- conda install --yes python=$TRAVIS_PYTHON_VERSION numpy scipy nose matplotlib astropy astroquery
+- conda install --yes python=$TRAVIS_PYTHON_VERSION numpy scipy nose matplotlib astropy
+- conda install --yes -c atropy astroquery
 - pip install codecov pypandoc
 - python setup.py install
 script:
