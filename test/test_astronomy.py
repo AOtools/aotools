@@ -26,3 +26,25 @@ def test_magnitude_to_flux_and_flux_to_magnitude():
 def test_photons_per_band():
     photons = astronomy.photons_per_band(5.56, circle(2, 5), 0.5, 0.001)
     assert type(photons) == float
+
+
+def test_flux_AB_mag():
+    flux = astronomy.flux_AB_mag(10, 0.91, 0.13)
+    assert type(flux) == float
+
+
+def test_flux_STMAG_mag():
+    flux = astronomy.flux_STMAG_mag(10, 0.91, 0.13)
+    assert type(flux) == float
+
+
+def test_get_magV():
+    magV = astronomy.get_magV('A0', 0, 'H')
+    assert type(magV) == float
+    assert magV == -0.19
+
+
+def test_flux_star_type():
+    flux = astronomy.flux_star_type(10, 'H', 'A0V', 1.1, 0.2)
+    assert type(flux) == astronomy.numpy.float64
+
