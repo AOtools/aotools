@@ -3,6 +3,8 @@ A library of functions which may be of use to analyse WFS data
 """
 
 import numpy
+from numpy import ndarray
+from typing import Tuple, Union
 
 # Best range for python2 and 3
 try:
@@ -11,7 +13,7 @@ except:
     pass
 
 
-def findActiveSubaps(subaps, mask, threshold, returnFill=False):
+def findActiveSubaps(subaps: int, mask: ndarray, threshold: float, returnFill: bool=False) -> Union[ndarray, Tuple[ndarray, ndarray]]:
     """
     Finds the subapertures which are "seen" be through the
     pupil function. Returns the coords of those subapertures
@@ -53,7 +55,7 @@ def findActiveSubaps(subaps, mask, threshold, returnFill=False):
         return subapCoords
 
 
-def computeFillFactor(mask, subapPos, subapSpacing):
+def computeFillFactor(mask: ndarray, subapPos: ndarray, subapSpacing: int) -> ndarray:
     """
     Calculate the fill factor of a set of sub-aperture co-ordinates with a given
     pupil mask.
@@ -77,7 +79,7 @@ def computeFillFactor(mask, subapPos, subapSpacing):
 
     return fills
 
-def make_subaps_2d(data, mask):
+def make_subaps_2d(data: ndarray, mask: ndarray) -> ndarray:
     """
     Fills in a pupil shape with 2-d sub-apertures
 

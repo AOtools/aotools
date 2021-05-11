@@ -19,6 +19,8 @@ import multiprocessing
 
 import numpy
 import scipy.special
+from numpy import float64, int64, ndarray
+from typing import List, Optional, Tuple, Union
 
 
 class CovarianceMatrix(object):
@@ -49,8 +51,8 @@ class CovarianceMatrix(object):
     """
 
     def __init__(
-        self, n_wfs, pupil_masks, telescope_diameter, subap_diameters, gs_altitudes, gs_positions, wfs_wavelengths,
-        n_layers, layer_altitudes, layer_r0s, layer_L0s, threads=1):
+        self, n_wfs: int, pupil_masks: List[ndarray], telescope_diameter: float, subap_diameters: List[float], gs_altitudes: List[int], gs_positions: List[Union[List[int], List[float64]]], wfs_wavelengths: List[float],
+        n_layers: int, layer_altitudes: ndarray, layer_r0s: List[int], layer_L0s: List[float], threads: int=1) -> None:
 
 
         self.threads = threads
@@ -78,7 +80,7 @@ class CovarianceMatrix(object):
         self.total_subaps = int(self.total_subaps)
 
 
-    def make_covariance_matrix(self):
+    def make_covariance_matrix(self) -> ndarray:
         """
         Calculate and build the covariance matrix
 
@@ -143,7 +145,7 @@ class CovarianceMatrix(object):
 
         return self.covariance_matrix
 
-    def _make_covariance_matrix(self):
+    def _make_covariance_matrix(self) -> None:
         # Now compile the covariance matrix
         self.covariance_matrix = numpy.zeros((2 * self.total_subaps, 2 * self.total_subaps)).astype("float32")
         for layer_n in range(self.n_layers):
@@ -190,7 +192,7 @@ class CovarianceMatrix(object):
                             cov_mat_coord_y1 + self.n_subaps[wfs_j]: cov_mat_coord_y2 + self.n_subaps[wfs_j]
                             ] += cov_yy * r0_scale
 
-    def _make_covariance_matrix_mp(self, threads):
+    def _make_covariance_matrix_mp(self, threads: int) -> None:
         pool = multiprocessing.Pool(threads)
 
         # Now compile the covariance matrix
@@ -248,7 +250,7 @@ class CovarianceMatrix(object):
                     thread_n += 1
 
 
-    def make_tomographic_reconstructor(self, svd_conditioning=0):
+    def make_tomographic_reconstructor(self, svd_conditioning: int=0) -> ndarray:
         """
         Creats a tomohraphic reconstructor from the covariance matrix as in Vidal, 2010.
         See the documentation for the function `create_tomographic_covariance_reconstructor` in this module.
@@ -271,7 +273,7 @@ def wfs_covariance_mpwrap(args):
     return wfs_covariance(*args)
 
 
-def wfs_covariance(n_subaps1, n_subaps2, wfs1_positions, wfs2_positions, wfs1_diam, wfs2_diam, r0, L0):
+def wfs_covariance(n_subaps1: int64, n_subaps2: int64, wfs1_positions: ndarray, wfs2_positions: ndarray, wfs1_diam: float64, wfs2_diam: float64, r0: int, L0: float) -> Tuple[ndarray, ndarray, ndarray]:
     """
     Calculates the covariance between 2 WFSs
 
@@ -300,7 +302,7 @@ def wfs_covariance(n_subaps1, n_subaps2, wfs1_positions, wfs2_positions, wfs1_di
     return cov_xx, cov_yy, cov_xy
 
 
-def calculate_wfs_seperations(n_subaps1, n_subaps2, wfs1_positions, wfs2_positions):
+def calculate_wfs_seperations(n_subaps1: int64, n_subaps2: int64, wfs1_positions: ndarray, wfs2_positions: ndarray) -> ndarray:
     """
     Calculates the seperation between all sub-apertures in two WFSs
 
@@ -328,7 +330,7 @@ def calculate_wfs_seperations(n_subaps1, n_subaps2, wfs1_positions, wfs2_positio
     # def get_wfs_wfs_covariance(self, ):
 
 
-def compute_covariance_xx(seperation, subap1_diam, subap2_diam, r0, L0):
+def compute_covariance_xx(seperation: ndarray, subap1_diam: float64, subap2_diam: float64, r0: int, L0: float) -> ndarray:
 
     x1 = seperation[..., 0] + (subap2_diam - subap1_diam) * 0.5
     r1 = numpy.sqrt(x1**2 + seperation[..., 1]**2)
@@ -347,7 +349,7 @@ def compute_covariance_xx(seperation, subap1_diam, subap2_diam, r0, L0):
 
     return Cxx
 
-def compute_covariance_yy(seperation, subap1_diam, subap2_diam, r0, L0):
+def compute_covariance_yy(seperation: ndarray, subap1_diam: float64, subap2_diam: float64, r0: int, L0: float) -> ndarray:
 
     y1 = seperation[..., 1] + (subap2_diam - subap1_diam) * 0.5
     r1 = numpy.sqrt(seperation[..., 0]**2 + y1**2)
@@ -366,7 +368,7 @@ def compute_covariance_yy(seperation, subap1_diam, subap2_diam, r0, L0):
     return Cyy
 
 
-def compute_covariance_xy(seperation, subap1_diam, subap2_diam, r0, L0):
+def compute_covariance_xy(seperation: ndarray, subap1_diam: float64, subap2_diam: float64, r0: int, L0: float) -> ndarray:
 
     x1 = seperation[..., 0] + subap1_diam * 0.5
     y1 = seperation[..., 1] - subap2_diam * 0.5
@@ -394,7 +396,7 @@ def compute_covariance_xy(seperation, subap1_diam, subap2_diam, r0, L0):
 
     return Cxy
 
-def structure_function_vk(seperation, r0, L0):
+def structure_function_vk(seperation: ndarray, r0: int, L0: float) -> ndarray:
     """
     Computes the Von Karmon structure function of atmospheric turbulence
 
@@ -416,7 +418,7 @@ def structure_function_vk(seperation, r0, L0):
     return D_vk
 
 
-def structure_function_kolmogorov(separation, r0):
+def structure_function_kolmogorov(separation: ndarray, r0: float) -> ndarray:
     '''
         Compute the Kolmogorov phase structure function
 
@@ -431,7 +433,7 @@ def structure_function_kolmogorov(separation, r0):
     return 6.88 * (separation / r0)**(5. / 3.)
 
 
-def calculate_structure_function(phase, nbOfPoint=None, step=None):
+def calculate_structure_function(phase: ndarray, nbOfPoint: None=None, step: None=None) -> ndarray:
     '''
         Compute the structure function of an 2D array, along the first dimension.
         SF defined as sf[j]= < (phase - phase_shifted_by_j)^2 >
@@ -458,7 +460,7 @@ def calculate_structure_function(phase, nbOfPoint=None, step=None):
     return sf_x
 
 
-def mirror_covariance_matrix(cov_mat):
+def mirror_covariance_matrix(cov_mat: ndarray) -> ndarray:
     """
     Mirrors a covariance matrix around the axis of the diagonal.
 
@@ -469,7 +471,7 @@ def mirror_covariance_matrix(cov_mat):
 
     return numpy.bitwise_or(cov_mat.view("int32"), cov_mat.T.view("int32")).view("float32")
 
-def create_tomographic_covariance_reconstructor(covariance_matrix, n_onaxis_subaps, svd_conditioning=0):
+def create_tomographic_covariance_reconstructor(covariance_matrix: ndarray, n_onaxis_subaps: int64, svd_conditioning: int=0) -> ndarray:
     """
     Calculates a tomographic reconstructor using the method of Vidal, JOSA A, 2010.
 

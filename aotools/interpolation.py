@@ -1,10 +1,13 @@
 import numpy
 from scipy.interpolate import interp2d,RectBivariateSpline
+from numpy import ndarray
+from typing import Tuple
+
 #a lookup dict for interp2d order (expressed as 'kind')
 INTERP_KIND = {1: 'linear', 3:'cubic', 5:'quintic'}
 
 
-def zoom(array, newSize, order=3):
+def zoom(array: ndarray, newSize: Tuple[int, int], order: int=3) -> ndarray:
     """
     A Class to zoom 2-dimensional arrays using interpolation
 
@@ -55,7 +58,7 @@ def zoom(array, newSize, order=3):
         #return numpy.flipud(numpy.rot90(interpObj(coordsY,coordsX)))
         return interpObj(coordsY,coordsX) 
 
-def zoom_rbs(array, newSize, order=3):
+def zoom_rbs(array: ndarray, newSize: Tuple[int, int], order: int=3) -> ndarray:
     """
     A Class to zoom 2-dimensional arrays using RectBivariateSpline interpolation
 
@@ -100,7 +103,7 @@ def zoom_rbs(array, newSize, order=3):
         return interpObj(coordsY,coordsX)
         
         
-def binImgs(data, n):
+def binImgs(data: ndarray, n: int) -> ndarray:
     '''
     Bins one or more images down by the given factor
     bins. n must be a factor of data.shape, who knows what happens

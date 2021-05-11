@@ -7,9 +7,11 @@ Functions for the creation of pupil maps and masks.
 """
 
 import numpy
+from numpy import float64, ndarray
+from typing import Tuple, Union
 
 
-def circle(radius, size, circle_centre=(0, 0), origin="middle"):
+def circle(radius: Union[float, float64, int], size: int, circle_centre: Tuple[int, int]=(0, 0), origin: str="middle") -> ndarray:
     """
     Create a 2-D array: elements equal 1 within a circle and 0 outside.
 

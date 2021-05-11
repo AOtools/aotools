@@ -1,4 +1,5 @@
 import numpy
+from numpy import ndarray
 
 # Dictionary of flux values at the top of the atmosphere
 #                 band, lamda, dLamda, m=0 flux (Jy)
@@ -16,7 +17,7 @@ FLUX_DICTIONARY = {'U': [0.36, 0.15, 1810],
                 'z': [0.91, 0.13, 4810]}
 
 
-def photons_per_mag(mag, mask, pixel_scale, wvlBand, exposure_time):
+def photons_per_mag(mag: float, mask: ndarray, pixel_scale: float, wvlBand: float, exposure_time: int) -> float:
     """
     Calculates the photon flux for a given aperture, star magnitude and wavelength band
 
@@ -45,7 +46,7 @@ def photons_per_mag(mag, mask, pixel_scale, wvlBand, exposure_time):
     return photons
 
 
-def photons_per_band(mag, mask, pxlScale, expTime, waveband='V'):
+def photons_per_band(mag: float, mask: ndarray, pxlScale: float, expTime: float, waveband: str='V') -> float:
         '''
         Calculates the photon flux for a given aperture, star magnitude and wavelength band
 
@@ -74,7 +75,7 @@ def photons_per_band(mag, mask, pxlScale, expTime, waveband='V'):
         return photons
 
 
-def magnitude_to_flux(magnitude, waveband='V'):
+def magnitude_to_flux(magnitude: float, waveband: str='V') -> float:
     """
     Converts apparent magnitude to a flux of photons
     
@@ -92,7 +93,7 @@ def magnitude_to_flux(magnitude, waveband='V'):
     return flux_photons
 
 
-def flux_to_magnitude(flux, waveband='V'):
+def flux_to_magnitude(flux: float, waveband: str='V') -> float:
     """
     Converts incident flux of photons to the apparent magnitude
     

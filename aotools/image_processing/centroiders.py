@@ -7,9 +7,11 @@ Functions for centroiding images.
 """
 
 import numpy
+from numpy import ndarray
+from typing import Union
 
 
-def correlation_centroid(im, ref, threshold=0., padding=1):
+def correlation_centroid(im: ndarray, ref: ndarray, threshold: float=0., padding: int=1) -> ndarray:
     """
     Correlation Centroider, currently only works for 3d im shape.
     Performs a simple thresholded COM on the correlation.
@@ -51,7 +53,8 @@ def correlation_centroid(im, ref, threshold=0., padding=1):
     return centroids
 
 
-def centre_of_gravity(img, threshold=0, min_threshold=0, **kwargs):
+def centre_of_gravity(img: ndarray, threshold: Union[float, int]=0, min_threshold: int=0, **kwargs
+) -> ndarray:
     """
     Centroids an image, or an array of images.
     Centroids over the last 2 dimensions.
@@ -90,7 +93,7 @@ def centre_of_gravity(img, threshold=0, min_threshold=0, **kwargs):
     return numpy.array([x_centroid, y_centroid])
 
 
-def brightest_pixel(img, threshold, **kwargs):
+def brightest_pixel(img: ndarray, threshold: float, **kwargs) -> ndarray:
     """
     Centroids using brightest Pixel Algorithm
     (A. G. Basden et al,  MNRAS, 2011)
@@ -123,7 +126,7 @@ def brightest_pixel(img, threshold, **kwargs):
     return centre_of_gravity(img)
 
 
-def cross_correlate(x, y, padding=1):
+def cross_correlate(x: ndarray, y: ndarray, padding: int=1) -> ndarray:
     """
     2D convolution using FFT, use to generate cross-correlations.
 
@@ -143,7 +146,7 @@ def cross_correlate(x, y, padding=1):
     return cross_correlation
 
 
-def quadCell(img, **kwargs):
+def quadCell(img: ndarray, **kwargs) -> ndarray:
     """
     Centroider to be used for 2x2 images.
 

@@ -2,9 +2,10 @@
 Module containing useful FFT based function and classes
 """
 import numpy
+from numpy import ndarray
 
 
-def ft(data, delta):
+def ft(data: ndarray, delta: float) -> ndarray:
     """
     A properly scaled 1-D FFT
 
@@ -21,7 +22,7 @@ def ft(data, delta):
             axes=(-1)) * delta
     return DATA
 
-def ift(DATA, delta_f):
+def ift(DATA: ndarray, delta_f: float) -> ndarray:
     """
     Scaled inverse 1-D FFT
 
@@ -41,7 +42,7 @@ def ift(DATA, delta_f):
     return data
 
 
-def ft2(data, delta):
+def ft2(data: ndarray, delta: float) -> ndarray:
     """
     A properly scaled 2-D FFT
 
@@ -61,7 +62,7 @@ def ft2(data, delta):
 
     return DATA
 
-def ift2(DATA, delta_f):
+def ift2(DATA: ndarray, delta_f: float) -> ndarray:
     """
     Scaled inverse 2-D FFT
 
@@ -79,7 +80,7 @@ def ift2(DATA, delta_f):
 
     return g
 
-def rft(data, delta):
+def rft(data: ndarray, delta: float) -> ndarray:
     """
     A properly scaled real 1-D FFT
 

@@ -16,8 +16,10 @@ Optimal Grouping in particular relies on numba to run fast.
 import numpy
 from scipy.optimize import minimize
 from numba import njit
+from numpy import float64, int64, ndarray
+from typing import List, Tuple
 
-def equivalent_layers(h, p, L):
+def equivalent_layers(h: ndarray, p: ndarray, L: int) -> Tuple[ndarray, ndarray]:
     '''
     Equivalent layers method of profile compression (Fusco 1999).
 
@@ -47,7 +49,7 @@ def equivalent_layers(h, p, L):
         h_el[i] = ((p[ix_tmp] * h[ix_tmp]**(5/3)).sum() / p[ix_tmp].sum())**(3/5)
     return h_el, cn2_el
 
-def optimal_grouping(R, L, h, p):
+def optimal_grouping(R: int, L: int, h: ndarray, p: ndarray) -> Tuple[ndarray, ndarray]:
     '''
     Python implementation of algorithm 2 from Saxenhuber et al (2017). Performs the 
     "optimal grouping" algorithm , which finds the grouping that minimises the 
@@ -81,7 +83,7 @@ def optimal_grouping(R, L, h, p):
 
     return numpy.array(hmin_best), numpy.array(cn2)
 
-def GCTM(h, p, L, h_scaling=10000., cn2_scaling=100e-15):
+def GCTM(h: ndarray, p: ndarray, L: int, h_scaling: float=10000., cn2_scaling: float=100e-15) -> Tuple[ndarray, ndarray]:
     '''
     Generalised Conservation of Turbulence Moments compression method, from 
     Saxenhuber et al 2017. This compresses the profile whilst conserving 2L-1 
@@ -107,7 +109,7 @@ def GCTM(h, p, L, h_scaling=10000., cn2_scaling=100e-15):
     res = minimize(_moments_minfunc, x0, args=(L, mom0), bounds = bounds)['x']
     return res[:L]*h_scaling, res[L:] * cn2_scaling
 
-def _random_grouping(N, L):
+def _random_grouping(N: int, L: int) -> ndarray:
     '''
     Creates a random grouping of N elements into L groups
     '''
@@ -115,7 +117,7 @@ def _random_grouping(N, L):
     splits = numpy.sort(numpy.random.choice(options, size=L-1, replace=False))
     return splits 
 
-def _vicinity(grouping, N):
+def _vicinity(grouping: ndarray, N: int) -> List[ndarray]:
     '''
     Calculate the vicinity of a grouping, see Saxenhuber (2017)
     '''
@@ -140,7 +142,7 @@ def _vicinity(grouping, N):
 
     return merged 
 
-def _convert_splits_to_groups(splits, N):
+def _convert_splits_to_groups(splits: ndarray, N: int) -> List[ndarray]:
     '''
     Convert indices of splits into explicit groupings
     '''
@@ -154,7 +156,7 @@ def _convert_splits_to_groups(splits, N):
         out.append(numpy.arange(splits[i]+1, splits[i+1]+1))
     return out
 
-def _G(grouping, h, p, return_hmin=False):
+def _G(grouping: List[ndarray], h: ndarray, p: ndarray, return_hmin: bool=False) -> Tuple[float64, List[int64]]:
     '''
     Optimal Grouping cost function (slow version)
     '''
@@ -199,7 +201,7 @@ def _Gjit(splits, h, p, return_hmin=False):
             hmin.append(h[group[numpy.argmin(cost_function)]])
     return cost_function_value
 
-def _optGroupingMinimization(start_grouping,h,p,maxiter=200):
+def _optGroupingMinimization(start_grouping: ndarray,h: ndarray,p: ndarray,maxiter: int=200) -> Tuple[ndarray, float64]:
     '''
     Minimisation of G (slow version)
     '''
@@ -218,14 +220,14 @@ def _optGroupingMinimization(start_grouping,h,p,maxiter=200):
             break
     return gamma_new, G_new
 
-def _moments(h, p, L):
+def _moments(h: ndarray, p: ndarray, L: int) -> ndarray:
     '''
     Generalised turbulence moments function for GCTM
     '''
     mom = numpy.array([p * h**(i) for i in range(2*L-1)])
     return mom.sum(1)
 
-def _moments_minfunc(args, L, mom0):
+def _moments_minfunc(args: ndarray, L: int, mom0: ndarray) -> float64:
     '''
     Minimisation function for GCTM. Minimises the sum of square difference between 
     2L-1 moments (see Saxenhuber et al 2017).

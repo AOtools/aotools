@@ -11,9 +11,11 @@ Turbulence gradient temporal power spectra calculation and plotting
 import numpy
 from matplotlib import pyplot
 from scipy import optimize
+from numpy import ndarray
+from typing import Tuple
 
 
-def calc_slope_temporalps(slope_data):
+def calc_slope_temporalps(slope_data: ndarray) -> Tuple[ndarray, ndarray]:
     """
     Calculates the temporal power spectra of the loaded centroid data.
 
@@ -45,7 +47,7 @@ def calc_slope_temporalps(slope_data):
     return mean_tps, tps_err
 
 
-def get_tps_time_axis(frame_rate, n_frames):
+def get_tps_time_axis(frame_rate: int, n_frames: int) -> ndarray:
     """
     Parameters:
         frame_rate (float): Frame rate of detector observing slope gradients (Hz)

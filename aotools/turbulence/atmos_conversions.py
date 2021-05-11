@@ -7,9 +7,10 @@ Functions for converting between different atmospheric parameters,
 """
 
 import numpy
+from numpy import ndarray
 
 
-def cn2_to_seeing(cn2, lamda=500.E-9):
+def cn2_to_seeing(cn2: float, lamda: float=500.E-9) -> float:
     """
     Calculates the seeing angle from the integrated Cn2 value
 
@@ -25,7 +26,7 @@ def cn2_to_seeing(cn2, lamda=500.E-9):
     return seeing
 
 
-def seeing_to_cn2(seeing, lamda=500.E-9):
+def seeing_to_cn2(seeing: float, lamda: float=500.E-9) -> float:
     """
     Calculates the integrated Cn2 value from the seeing
 
@@ -41,7 +42,7 @@ def seeing_to_cn2(seeing, lamda=500.E-9):
     return cn2
 
 
-def cn2_to_r0(cn2, lamda=500.E-9):
+def cn2_to_r0(cn2: float, lamda: float=500.E-9) -> float:
     """
     Calculates r0 from the integrated Cn2 value
 
@@ -56,7 +57,7 @@ def cn2_to_r0(cn2, lamda=500.E-9):
     return r0
 
 
-def r0_to_cn2(r0, lamda=500.E-9):
+def r0_to_cn2(r0: float, lamda: float=500.E-9) -> float:
     """
     Calculates integrated Cn2 value from r0
 
@@ -71,7 +72,7 @@ def r0_to_cn2(r0, lamda=500.E-9):
     return cn2
 
 
-def r0_to_seeing(r0, lamda=500.E-9):
+def r0_to_seeing(r0: float, lamda: float=500.E-9) -> float:
     """
     Calculates the seeing angle from r0
 
@@ -85,7 +86,7 @@ def r0_to_seeing(r0, lamda=500.E-9):
     return (0.98*lamda/r0)*180.*3600./numpy.pi
 
 
-def seeing_to_r0(seeing, lamda=500.E-9):
+def seeing_to_r0(seeing: float, lamda: float=500.E-9) -> float:
     """
     Calculates r0 from seeing
 
@@ -99,7 +100,7 @@ def seeing_to_r0(seeing, lamda=500.E-9):
     return 0.98*lamda/(seeing*numpy.pi/(180.*3600.))
 
 
-def coherenceTime(cn2, v, lamda=500.E-9):
+def coherenceTime(cn2: ndarray, v: ndarray, lamda: float=500.E-9) -> float:
     """
     Calculates the coherence time from profiles of the Cn2 and wind velocity
 
@@ -116,7 +117,7 @@ def coherenceTime(cn2, v, lamda=500.E-9):
     return tau0
 
 
-def isoplanaticAngle(cn2, h, lamda=500.E-9):
+def isoplanaticAngle(cn2: ndarray, h: ndarray, lamda: float=500.E-9) -> float:
     """
     Calculates the isoplanatic angle from the Cn2 profile
 
@@ -133,7 +134,7 @@ def isoplanaticAngle(cn2, h, lamda=500.E-9):
     return iso
 
 
-def r0_from_slopes(slopes, wavelength, subapDiam):
+def r0_from_slopes(slopes: ndarray, wavelength: float, subapDiam: float) -> float:
     """
     Measures the value of R0 from a set of WFS slopes.
 
@@ -157,7 +158,7 @@ def r0_from_slopes(slopes, wavelength, subapDiam):
     return r0
 
 
-def slope_variance_from_r0(r0, wavelength, subapDiam):
+def slope_variance_from_r0(r0: float, wavelength: float, subapDiam: float) -> float:
     """
     Uses the equation in Saint Jaques, 1998, PhD Thesis, Appendix A to calculate the slope variance resulting from a
     value of r0.

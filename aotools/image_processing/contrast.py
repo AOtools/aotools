@@ -4,8 +4,9 @@ Contrast
 
 Functions for calculating the contrast of an image.
 """
+from numpy import ndarray
 
-def image_contrast(image):
+def image_contrast(image: ndarray) -> float:
     """
     Calculates the 'Michelson' contrast.
 
@@ -24,7 +25,7 @@ def image_contrast(image):
     return float(contrast)
 
 
-def rms_contrast(image):
+def rms_contrast(image: ndarray) -> float:
     """
     Calculates the RMS contrast - basically the standard deviation of the image
 

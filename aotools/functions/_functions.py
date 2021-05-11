@@ -1,7 +1,9 @@
 import numpy
+from numpy import ndarray
+from typing import Optional, Tuple, Union
 
 
-def gaussian2d(size, width, amplitude=1., cent=None):
+def gaussian2d(size: Union[Tuple[int, int], int], width: Union[Tuple[int, int], int], amplitude: float=1., cent: Optional[Union[ndarray, Tuple[int, int]]]=None) -> ndarray:
     '''
     Generates 2D gaussian distribution
 

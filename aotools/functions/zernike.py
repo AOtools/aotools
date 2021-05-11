@@ -1,5 +1,7 @@
 import numpy
 from . import circle
+from numpy import ndarray
+from typing import List, Union
 
 # xrange just "range" in python3.
 # This code means fastest implementation used in 2 and 3
@@ -8,7 +10,7 @@ try:
 except NameError:
     xrange = range
 
-def phaseFromZernikes(zCoeffs, size, norm="noll"):
+def phaseFromZernikes(zCoeffs: List[int], size: int, norm: str="noll") -> ndarray:
     """
     Creates an array of the sum of zernike polynomials with specified coefficeints
 
@@ -28,7 +30,7 @@ def phaseFromZernikes(zCoeffs, size, norm="noll"):
     return phase
 
 
-def zernike_noll(j, N):
+def zernike_noll(j: int, N: int) -> ndarray:
     """
      Creates the Zernike polynomial with mode index j,
      where j = 1 corresponds to piston.
@@ -44,7 +46,7 @@ def zernike_noll(j, N):
     return zernike_nm(n, m, N)
 
 
-def zernike_nm(n, m, N):
+def zernike_nm(n: int, m: int, N: int) -> ndarray:
     """
      Creates the Zernike polynomial with radial index, n, and azimuthal index, m.
 
@@ -75,7 +77,7 @@ def zernike_nm(n, m, N):
     return Z*circle(N/2., N)
 
 
-def zernikeRadialFunc(n, m, r):
+def zernikeRadialFunc(n: int, m: int, r: ndarray) -> ndarray:
     """
     Fucntion to calculate the Zernike radial function
 
@@ -100,7 +102,7 @@ def zernikeRadialFunc(n, m, r):
     return R
 
 
-def zernIndex(j):
+def zernIndex(j: int) -> List[int]:
     """
     Find the [n,m] list giving the radial order n and azimuthal order
     of the Zernike polynomial of Noll index j.
@@ -126,7 +128,7 @@ def zernIndex(j):
     return [n, m]
 
 
-def zernikeArray(J, N, norm="noll"):
+def zernikeArray(J: Union[List[int], int], N: int, norm: str="noll") -> ndarray:
     """
     Creates an array of Zernike Polynomials
 
@@ -172,7 +174,7 @@ def zernikeArray(J, N, norm="noll"):
     return Zs
 
 
-def makegammas(nzrad):
+def makegammas(nzrad: int) -> ndarray:
     """
     Make "Gamma" matrices which can be used to determine first derivative
     of Zernike matrices (Noll 1976).

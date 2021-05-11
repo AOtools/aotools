@@ -8,9 +8,11 @@ Functions for analysing PSFs.
 
 import numpy
 from .. import functions
+from numpy import ndarray
+from typing import Optional, Tuple, Union
 
 
-def azimuthal_average(data):
+def azimuthal_average(data: ndarray) -> ndarray:
     """
     Measure the azimuthal average of a 2d array
 
@@ -29,9 +31,9 @@ def azimuthal_average(data):
     return avg
 
 
-def encircled_energy(data,
-                    fraction=0.5, center=None,
-                    eeDiameter=True):
+def encircled_energy(data: ndarray,
+                    fraction: float=0.5, center: None=None,
+                    eeDiameter: bool=True) -> Union[float, Tuple[ndarray, ndarray]]:
     """
         Return the encircled energy diameter for a given fraction
         (default is ee50d).
