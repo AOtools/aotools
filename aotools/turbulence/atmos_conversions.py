@@ -99,7 +99,7 @@ def seeing_to_r0(seeing, lamda=500.E-9):
     return 0.98*lamda/(seeing*numpy.pi/(180.*3600.))
 
 
-def coherenceTime(cn2, v, lamda=500.E-9):
+def coherenceTime(cn2, v, lamda=500.E-9, axis=-1):
     """
     Calculates the coherence time from profiles of the Cn2 and wind velocity
 
@@ -111,12 +111,12 @@ def coherenceTime(cn2, v, lamda=500.E-9):
     Returns:
         coherence time in seconds
     """
-    Jv = (cn2*(v**(5./3.))).sum()
+    Jv = (cn2*(v**(5./3.))).sum(axis)
     tau0 = float((Jv**(-3./5.))*0.057*lamda**(6./5.))
     return tau0
 
 
-def isoplanaticAngle(cn2, h, lamda=500.E-9):
+def isoplanaticAngle(cn2, h, lamda=500.E-9, axis=-1):
     """
     Calculates the isoplanatic angle from the Cn2 profile
 
@@ -128,8 +128,8 @@ def isoplanaticAngle(cn2, h, lamda=500.E-9):
     Returns:
         isoplanatic angle in arcseconds
     """
-    Jh = (cn2*(h**(5./3.))).sum()
-    iso = float(0.057*lamda**(6./5.)*Jh**(-3./5.)*180.*3600./numpy.pi)
+    Jh = (cn2*(h**(5./3.))).sum(axis)
+    iso = 0.057*lamda**(6./5.)*Jh**(-3./5.)*180.*3600./numpy.pi
     return iso
 
 
