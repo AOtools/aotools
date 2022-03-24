@@ -55,6 +55,13 @@ def test_isoplanaticAngle():
     assert isinstance(isoplanatic_angle, (float, numpy.float64))
 
 
+def test_rytov_variance():
+    cn2 = numpy.array((5e-13, 1e-14))
+    h = numpy.array((0., 10000.))
+    rytov_variance = atmos_conversions.rytov_variance(cn2, h)
+    assert isinstance(rytov_variance, (float, numpy.float64))
+
+
 def test_r0_from_slopes():
     slopes = numpy.random.random((2, 10, 100))
     wavelength = 500e-9

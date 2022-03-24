@@ -133,6 +133,19 @@ def isoplanaticAngle(cn2, h, lamda=500.E-9, axis=-1):
     return iso
 
 
+def rytov_variance(cn2, h, lamda=500.E-9, axis=-1):
+    """
+    Calculates plane wave Rytov variance from the Cn2 profile
+
+    Parameters:
+        cn2 (numpy.ndarray): Cn2 profile in m^2/3
+        h (numpy.ndarray): Altitude levels of cn2 profile in m
+        lamda (float, optional): wavelength, default 500 nm
+    """
+    k = 2. * numpy.pi / lamda
+    return 2.25 * k**(7./6.) * (cn2*h**(5./6.)).sum(axis)
+
+
 def r0_from_slopes(slopes, wavelength, subapDiam):
     """
     Measures the value of R0 from a set of WFS slopes.
