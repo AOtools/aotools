@@ -5,19 +5,19 @@ import numpy
 def test_cn2_to_seeing():
     cn2 = 5e-13
     seeing = atmos_conversions.cn2_to_seeing(cn2)
-    assert type(seeing) == float
+    assert isinstance(seeing, float)
 
 
 def test_cn2_to_r0():
     cn2 = 5e-13
     r0 = atmos_conversions.cn2_to_r0(cn2)
-    assert type(r0) == float
+    assert isinstance(r0, (float, numpy.float64))
 
 
 def test_r0_to_seeing():
     r0 = 0.1
     seeing = atmos_conversions.r0_to_seeing(r0)
-    assert type(seeing) == float
+    assert isinstance(seeing, (float, numpy.float64))
 
 
 def test_conversion_consistency():
@@ -45,15 +45,14 @@ def test_coherenceTime():
     cn2 = numpy.array((5e-13, 1e-14))
     v = numpy.array((10, 20))
     tau0 = atmos_conversions.coherenceTime(cn2, v)
-    print(tau0, type(tau0))
-    assert type(tau0) == float
+    assert isinstance(tau0, (float, numpy.float64))
 
 
 def test_isoplanaticAngle():
     cn2 = numpy.array((5e-13, 1e-14))
     h = numpy.array((0., 10000.))
     isoplanatic_angle = atmos_conversions.isoplanaticAngle(cn2, h)
-    assert type(isoplanatic_angle) == float
+    assert isinstance(isoplanatic_angle, (float, numpy.float64))
 
 
 def test_r0_from_slopes():
@@ -61,7 +60,7 @@ def test_r0_from_slopes():
     wavelength = 500e-9
     subapDiam = 0.5
     r0 = atmos_conversions.r0_from_slopes(slopes, wavelength, subapDiam)
-    assert type(r0) == float
+    assert isinstance(r0, (float, numpy.float64))
 
 
 def test_slope_variance_from_r0():
@@ -69,7 +68,7 @@ def test_slope_variance_from_r0():
     wavelength = 500e-9
     subapDiam = 0.5
     variance = atmos_conversions.slope_variance_from_r0(r0, wavelength, subapDiam)
-    assert type(variance) == float
+    assert isinstance(variance, (float, numpy.float64))
 
 
 def test_r0_coversion_consistancy():

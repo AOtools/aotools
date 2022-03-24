@@ -112,7 +112,7 @@ def coherenceTime(cn2, v, lamda=500.E-9, axis=-1):
         coherence time in seconds
     """
     Jv = (cn2*(v**(5./3.))).sum(axis)
-    tau0 = float((Jv**(-3./5.))*0.057*lamda**(6./5.))
+    tau0 = (Jv**(-3./5.))*0.057*lamda**(6./5.)
     return tau0
 
 
@@ -152,7 +152,7 @@ def r0_from_slopes(slopes, wavelength, subapDiam):
 
     r0 = ((0.162 * (wavelength ** 2) * subapDiam ** (-1. / 3)) / slopeVar) ** (3. / 5)
 
-    r0 = float(r0.mean())
+    r0 = r0.mean()
 
     return r0
 
