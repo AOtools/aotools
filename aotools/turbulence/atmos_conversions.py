@@ -107,6 +107,7 @@ def coherenceTime(cn2, v, lamda=500.E-9, axis=-1):
         cn2 (array): Cn2 profile in m^2/3
         v (array): profile of wind velocity, same altitude scale as cn2 
         lamda : wavelength
+        axis (int, optional): axis over which to integrate (for >1D inputs)
 
     Returns:
         coherence time in seconds
@@ -124,6 +125,7 @@ def isoplanaticAngle(cn2, h, lamda=500.E-9, axis=-1):
         cn2 (array): Cn2 profile in m^2/3
         h (Array): Altitude levels of cn2 profile in m
         lamda : wavelength
+        axis (int, optional): axis over which to integrate (for >1D inputs)
 
     Returns:
         isoplanatic angle in arcseconds
@@ -141,6 +143,10 @@ def rytov_variance(cn2, h, lamda=500.E-9, axis=-1):
         cn2 (numpy.ndarray): Cn2 profile in m^2/3
         h (numpy.ndarray): Altitude levels of cn2 profile in m
         lamda (float, optional): wavelength, default 500 nm
+        axis (int, optional): axis over which to integrate (for >1D inputs)
+
+    Returns:
+        Rytov variance (float)
     """
     k = 2. * numpy.pi / lamda
     return 2.25 * k**(7./6.) * (cn2*h**(5./6.)).sum(axis)
