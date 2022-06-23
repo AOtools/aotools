@@ -613,6 +613,8 @@ def make_kl(nmax, dim, ri=0.0, nr=40,
     --------
     gkl_basis, set_pctr, pol2car
     '''
+    if (ri == 0):
+        raise Exception("KL modes generation only works for annular apertures, central obscuration must be > 0!")
 
     npp = int(2 * np.pi * nr)
     if (nr * npp) < (15 * nmax):
