@@ -104,7 +104,9 @@ def coherenceTime(cn2, v, lamda=500.E-9, axis=-1):
     Calculates the coherence time from profiles of the Cn2 and wind velocity
 
     Parameters:
-        cn2 (array): Cn2 profile in m^2/3
+        cn2 (array): Cn2 profile in m^2/3. >1D arrays are supported (i.e. multiple
+            profiles), in which case the default assumption is that the turbulent 
+            layers are along the final (-1) axis. 
         v (array): profile of wind velocity, same altitude scale as cn2 
         lamda : wavelength
         axis (int, optional): axis over which to integrate (for >1D inputs)
@@ -122,7 +124,9 @@ def isoplanaticAngle(cn2, h, lamda=500.E-9, axis=-1):
     Calculates the isoplanatic angle from the Cn2 profile
 
     Parameters:
-        cn2 (array): Cn2 profile in m^2/3
+        cn2 (array): Cn2 profile in m^2/3.  >1D arrays are supported (i.e. multiple
+            profiles), in which case the default assumption is that the turbulent 
+            layers are along the final (-1) axis. 
         h (Array): Altitude levels of cn2 profile in m
         lamda : wavelength
         axis (int, optional): axis over which to integrate (for >1D inputs)
@@ -140,7 +144,9 @@ def rytov_variance(cn2, h, lamda=500.E-9, axis=-1):
     Calculates plane wave Rytov variance from the Cn2 profile
 
     Parameters:
-        cn2 (numpy.ndarray): Cn2 profile in m^2/3
+        cn2 (numpy.ndarray): Cn2 profile in m^2/3.  >1D arrays are supported (i.e. multiple
+            profiles), in which case the default assumption is that the turbulent 
+            layers are along the final (-1) axis. 
         h (numpy.ndarray): Altitude levels of cn2 profile in m
         lamda (float, optional): wavelength, default 500 nm
         axis (int, optional): axis over which to integrate (for >1D inputs)
