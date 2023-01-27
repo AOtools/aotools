@@ -1,8 +1,14 @@
 import numpy
 from . import circle
 
+# xrange just "range" in python3.
+# This code means fastest implementation used in 2 and 3
+try:
+    xrange
+except NameError:
+    xrange = range
 
-def phaseFromZernikes(zCoeffs, size, norm="noll"):
+def phaseFromZernikes(zCoeffs, size, norm="noll", rot=0):
     """
     Creates an array of the sum of zernike polynomials with specified coefficeints
 
@@ -10,19 +16,19 @@ def phaseFromZernikes(zCoeffs, size, norm="noll"):
         zCoeffs (list): zernike Coefficients
         size (int): Diameter of returned array
         norm (string, optional): The normalisation of Zernike modes. Can be ``"noll"``, ``"p2v"`` (peak to valley), or ``"rms"``. default is ``"noll"``.
-
+        rot (float) : Rotates the Zernike mode by rot radians around its centre. Defaults to zero.
     Returns:
         ndarray: a `size` x `size` array of summed Zernike polynomials
     """
-    Zs = zernikeArray(len(zCoeffs), size, norm=norm)
+    Zs = zernikeArray(len(zCoeffs), size, norm=norm, rot=rot)
     phase = numpy.zeros((size, size))
-    for z in range(len(zCoeffs)):
+    for z in xrange(len(zCoeffs)):
         phase += Zs[z] * zCoeffs[z]
 
     return phase
 
 
-def zernike_noll(j, N):
+def zernike_noll(j, N, rot=0):
     """
      Creates the Zernike polynomial with mode index j,
      where j = 1 corresponds to piston.
@@ -30,15 +36,16 @@ def zernike_noll(j, N):
      Args:
         j (int): The noll j number of the zernike mode
         N (int): The diameter of the zernike more in pixels
+        rot (float): Rotates the Zernike mode by rot radians around its centre. Defaults to zero.
      Returns:
         ndarray: The Zernike mode
      """
 
     n, m = zernIndex(j)
-    return zernike_nm(n, m, N)
+    return zernike_nm(n, m, N, rot)
 
 
-def zernike_nm(n, m, N):
+def zernike_nm(n, m, N, rot=0):
     """
      Creates the Zernike polynomial with radial index, n, and azimuthal index, m.
 
@@ -46,6 +53,7 @@ def zernike_nm(n, m, N):
         n (int): The radial order of the zernike mode
         m (int): The azimuthal order of the zernike mode
         N (int): The diameter of the zernike more in pixels
+        rot (float): Rotates the zernike by rot radians around its centre. Defaults to 0.
      Returns:
         ndarray: The Zernike mode
      """
@@ -58,10 +66,10 @@ def zernike_nm(n, m, N):
         Z = numpy.sqrt(n+1)*zernikeRadialFunc(n, 0, R)
     else:
         if m > 0: # j is even
-            Z = numpy.sqrt(2*(n+1)) * zernikeRadialFunc(n, m, R) * numpy.cos(m*theta)
+            Z = numpy.sqrt(2*(n+1)) * zernikeRadialFunc(n, m, R) * numpy.cos((m*theta)+rot)
         else:   #i is odd
             m = abs(m)
-            Z = numpy.sqrt(2*(n+1)) * zernikeRadialFunc(n, m, R) * numpy.sin(m * theta)
+            Z = numpy.sqrt(2*(n+1)) * zernikeRadialFunc(n, m, R) * numpy.sin((m*theta)+rot)
 
     # clip
     Z = Z*numpy.less_equal(R, 1.0)
@@ -84,7 +92,7 @@ def zernikeRadialFunc(n, m, r):
 
     R = numpy.zeros(r.shape)
     # Can cast the below to "int", n,m are always *both* either even or odd
-    for i in range(0, int((n - m) / 2) + 1):
+    for i in xrange(0, int((n - m) / 2) + 1):
 
         R += numpy.array(r**(n - 2 * i) * (((-1)**(i)) *
                          numpy.math.factorial(n - i)) /
@@ -121,7 +129,7 @@ def zernIndex(j):
     return [n, m]
 
 
-def zernikeArray(J, N, norm="noll"):
+def zernikeArray(J, N, norm="noll", rot=0):
     """
     Creates an array of Zernike Polynomials
 
@@ -129,6 +137,7 @@ def zernikeArray(J, N, norm="noll"):
         maxJ (int or list): Max Zernike polynomial to create, or list of zernikes J indices to create
         N (int): size of created arrays
         norm (string, optional): The normalisation of Zernike modes. Can be ``"noll"``, ``"p2v"`` (peak to valley), or ``"rms"``. default is ``"noll"``.
+        rot (float): Rotates the zernike modes by rot radians around their centre. Defaults to 0.
 
     Returns:
         ndarray: array of Zernike Polynomials
@@ -137,8 +146,8 @@ def zernikeArray(J, N, norm="noll"):
     try:
         nJ = len(J)
         Zs = numpy.empty((nJ, N, N))
-        for i in range(nJ):
-            Zs[i] = zernike_noll(J[i], N)
+        for i in xrange(nJ):
+            Zs[i] = zernike_noll(J[i], N, rot)
 
     # Else, cast to int and create up to that number
     except TypeError:
@@ -148,16 +157,16 @@ def zernikeArray(J, N, norm="noll"):
 
         Zs = numpy.empty((maxJ, N, N))
 
-        for j in range(1, maxJ+1):
-            Zs[j-1] = zernike_noll(j, N)
+        for j in xrange(1, maxJ+1):
+            Zs[j-1] = zernike_noll(j, N, rot)
 
 
     if norm=="p2v":
-        for z in range(len(Zs)):
+        for z in xrange(len(Zs)):
             Zs[z] /= (Zs[z].max()-Zs[z].min())
 
     elif norm=="rms":
-        for z in range(len(Zs)):
+        for z in xrange(len(Zs)):
             # Norm by RMS. Remember only to include circle elements in mean
             Zs[z] /= numpy.sqrt(
                     numpy.sum(Zs[z]**2)/numpy.sum(circle(N/2., N)))
