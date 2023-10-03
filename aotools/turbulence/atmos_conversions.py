@@ -115,7 +115,7 @@ def coherenceTime(cn2, v, lamda=500.E-9, axis=-1):
         coherence time in seconds
     """
     Jv = (cn2*(v**(5./3.))).sum(axis)
-    tau0 = (Jv**(-3./5.))*0.057*lamda**(6./5.)
+    tau0 = (Jv**(-3./5.))*0.0581*lamda**(6./5.)
     return tau0
 
 
@@ -135,7 +135,7 @@ def isoplanaticAngle(cn2, h, lamda=500.E-9, axis=-1):
         isoplanatic angle in arcseconds
     """
     Jh = (cn2*(h**(5./3.))).sum(axis)
-    iso = 0.057*lamda**(6./5.)*Jh**(-3./5.)*180.*3600./numpy.pi
+    iso = 0.0581*lamda**(6./5.)*Jh**(-3./5.)*180.*3600./numpy.pi
     return iso
 
 
