@@ -1,5 +1,6 @@
 from aotools import image_processing
 import numpy
+# from nose.tools import raises
 
 
 def test_centre_of_gravity_single():
@@ -66,3 +67,13 @@ def test_correlation_many():
     com = image_processing.correlation_centroid(im, ref, 0.3)
     assert (com.shape[0] == 2)
     assert(com.shape[1] == 5)
+
+
+# @raises(ValueError)
+# def test_correlation_error():
+#     im = numpy.random.random((10))
+#     ref = numpy.random.random((10, 10))
+#     com = image_processing.correlation_centroid(im, ref, threshold=0.3)
+
+
+
