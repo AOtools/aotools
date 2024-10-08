@@ -1,5 +1,6 @@
 from aotools import functions
 import numpy
+import matplotlib.pyplot as plt
 
 
 def test_zernIndex():
@@ -7,7 +8,6 @@ def test_zernIndex():
     for i in range(1, 6):
         index = functions.zernIndex(i)
         assert(index == results[i-1])
-
 
 def test_makegammas():
     gammas = functions.makegammas(5)
@@ -39,6 +39,8 @@ def test_zernike():
 def test_zernikeArray_single():
     zernike_array = functions.zernikeArray(10, 32)
     assert(zernike_array.shape == (10, 32, 32))
+    plt.imshow(zernike_array[0])
+    plt.show()
 
 
 def test_zernikeArray_list():
@@ -55,3 +57,5 @@ def test_zernikeArray_comparison():
 def test_phaseFromZernikes():
     phase_map = functions.phaseFromZernikes([1, 2, 3, 4, 5], 32)
     assert(phase_map.shape == (32, 32))
+
+
