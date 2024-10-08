@@ -1,6 +1,5 @@
 from aotools import functions
 import numpy
-import matplotlib.pyplot as plt
 
 
 def test_zernIndex():
@@ -39,8 +38,6 @@ def test_zernike():
 def test_zernikeArray_single():
     zernike_array = functions.zernikeArray(10, 32)
     assert(zernike_array.shape == (10, 32, 32))
-    plt.imshow(zernike_array[0])
-    plt.show()
 
 
 def test_zernikeArray_list():
