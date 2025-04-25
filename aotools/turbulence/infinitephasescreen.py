@@ -143,16 +143,14 @@ class PhaseScreen(object):
         Calculates the "A" matrix, that uses the existing data to find a new 
         component of the new phase vector.
         """
-        # Cholsky solve can fail - if so do brute force inversion
         try:
             cf = linalg.cho_factor(self.cov_mat_zz)
             inv_cov_zz = linalg.cho_solve(cf, numpy.identity(self.cov_mat_zz.shape[0]))
+            self.A_mat = self.cov_mat_xz.dot(inv_cov_zz)
         except linalg.LinAlgError:
-            # print("Cholesky solve failed. Performing SVD inversion...")
-            # inv_cov_zz = numpy.linalg.pinv(self.cov_mat_zz)
-            raise linalg.LinAlgError("Could not invert Covariance Matrix to for A and B Matrices. Try with a larger pixel scale or smaller L0")
-
-        self.A_mat = self.cov_mat_xz.dot(inv_cov_zz)
+            print("Cholesky solve failed. Performing least squares inversion...")
+            inv_cov_zz = numpy.linalg.lstsq(self.cov_mat_zz, numpy.identity(self.cov_mat_zz.shape[0]), rcond=1e-8)
+            self.A_mat = self.cov_mat_xz.dot(inv_cov_zz[0])
 
     def makeBMatrix(self):
         """
