@@ -8,7 +8,6 @@ def test_zernIndex():
         index = functions.zernIndex(i)
         assert(index == results[i-1])
 
-
 def test_makegammas():
     gammas = functions.makegammas(5)
     assert(gammas.shape == (2, 21, 21))
@@ -55,3 +54,5 @@ def test_zernikeArray_comparison():
 def test_phaseFromZernikes():
     phase_map = functions.phaseFromZernikes([1, 2, 3, 4, 5], 32)
     assert(phase_map.shape == (32, 32))
+
+
