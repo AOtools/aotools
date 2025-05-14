@@ -35,12 +35,11 @@ def zoom(array, newSize, order=3):
     #If array is complex must do 2 interpolations
     if array.dtype==numpy.complex64 or array.dtype==numpy.complex128:
 
-        realInterpObj = interp2d(   numpy.arange(array.shape[0]),
-                numpy.arange(array.shape[1]), array.real, copy=False, 
-                kind=INTERP_KIND[order])
-        imagInterpObj = interp2d(   numpy.arange(array.shape[0]),
-                numpy.arange(array.shape[1]), array.imag, copy=False,
-                kind=INTERP_KIND[order])                 
+        realInterpObj = RectBivariateSpline(   numpy.arange(array.shape[0]),
+                numpy.arange(array.shape[1]), array.real, kx=order, ky=order)
+        imagInterpObj = RectBivariateSpline(   numpy.arange(array.shape[0]),
+                numpy.arange(array.shape[1]), array.imag,
+                kx=order, ky=order)
         return (realInterpObj(coordsY,coordsX) 
                             + 1j*imagInterpObj(coordsY,coordsX))
 
@@ -48,9 +47,8 @@ def zoom(array, newSize, order=3):
 
     else:
 
-        interpObj = interp2d(   numpy.arange(array.shape[0]),
-                numpy.arange(array.shape[1]), array, copy=False,
-                kind=INTERP_KIND[order])
+        interpObj = RectBivariateSpline(   numpy.arange(array.shape[0]),
+                numpy.arange(array.shape[1]), array, kx=order, ky=order)
 
         #return numpy.flipud(numpy.rot90(interpObj(coordsY,coordsX)))
         return interpObj(coordsY,coordsX) 
