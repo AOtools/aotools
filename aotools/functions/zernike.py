@@ -91,8 +91,8 @@ def zernikeRadialFunc(n, m, r):
         R += numpy.array(r**(n - 2 * i) * (((-1)**(i)) *
                          math.factorial(n - i)) /
                          (math.factorial(i) *
-                          math.factorial(0.5 * (n + m) - i) *
-                          math.factorial(0.5 * (n - m) - i)),
+                          math.factorial(int(0.5 * (n + m) - i)) *
+                          math.factorial(int(0.5 * (n - m) - i))),
                          dtype='float')
     return R
 
