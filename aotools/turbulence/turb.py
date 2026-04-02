@@ -21,7 +21,7 @@ def phase_covariance(r, r0, L0):
         L0 (float): Outer scale of turbulence in metres
     """
     # Make sure everything is a float to avoid nasty surprises in division!
-    r = numpy.float32(r)
+    r = numpy.float64(r)
     r0 = float(r0)
     L0 = float(L0)
 
