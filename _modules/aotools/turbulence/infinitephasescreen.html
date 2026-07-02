@@ -1,0 +1,554 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>aotools.turbulence.infinitephasescreen &mdash; AOtools 0.1.dev477+g8f38ff7c1.d20260605 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=fa44fd50" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=867f5289"></script>
+      <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            AOtools
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../turbulence.html">Atmospheric Turbulence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../image_processing.html">Image Processing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../zernike.html">Circular Functions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../pupil.html">Telescope Pupils</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../wfs.html">Wavefront Sensors</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../opticalpropagation.html">Optical Propagation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../astronomy.html">Astronomical Functions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../fft.html">Normalised Fourier Transforms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../interpolation.html">Interpolation</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">AOtools</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">aotools.turbulence.infinitephasescreen</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for aotools.turbulence.infinitephasescreen</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Infinite Phase Screens</span>
+<span class="sd">----------------------</span>
+
+<span class="sd">An implementation of the &quot;infinite phase screen&quot;, as deduced by Francois Assemat and Richard W. Wilson, 2006.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span> <span class="nn">scipy</span> <span class="kn">import</span> <span class="n">linalg</span>
+<span class="kn">import</span> <span class="nn">numpy</span>
+<span class="kn">import</span> <span class="nn">numba</span>
+
+<span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">phasescreen</span><span class="p">,</span> <span class="n">turb</span>
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;PhaseScreenVonKarman&quot;</span><span class="p">,</span> <span class="s2">&quot;PhaseScreenKolmogorov&quot;</span><span class="p">]</span>
+
+
+<span class="k">class</span> <span class="nc">PhaseScreen</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A &quot;Phase Screen&quot; for use in AO simulation.  Can be extruded infinitely.</span>
+
+<span class="sd">    This represents the phase addition light experiences when passing through atmospheric </span>
+<span class="sd">    turbulence. Unlike other phase screen generation techniques that translate a large static </span>
+<span class="sd">    screen, this method keeps a small section of phase, and extends it as necessary for as many</span>
+<span class="sd">    steps as required. This can significantly reduce memory consumption at the expense of more</span>
+<span class="sd">    processing power required.</span>
+
+<span class="sd">    The technique is described in a paper by Assemat and Wilson, 2006 and expanded upon by Fried, 2008.</span>
+<span class="sd">    It essentially assumes that there are two matrices, &quot;A&quot; and &quot;B&quot;,</span>
+<span class="sd">    that can be used to extend an existing phase screen.</span>
+<span class="sd">    A single row or column of new phase can be represented by </span>
+
+<span class="sd">        X = A.Z + B.b</span>
+
+<span class="sd">    where X is the new phase vector, Z is some data from the existing screen,</span>
+<span class="sd">    and b is a random vector with gaussian statistics.</span>
+
+<span class="sd">    This object calculates the A and B matrices using an expression of the phase covariance when it</span>
+<span class="sd">    is initialised. Calculating A is straightforward through the relationship:</span>
+
+<span class="sd">        A =  Cov_xz . (Cov_zz)^(-1).</span>
+
+<span class="sd">    B is less trivial.</span>
+
+<span class="sd">        BB^t = Cov_xx - A.Cov_zx</span>
+
+<span class="sd">    (where B^t is the transpose of B) is a symmetric matrix, hence B can be expressed as </span>
+
+<span class="sd">        B = UL, </span>
+
+<span class="sd">    where U and L are obtained from the svd for BB^t</span>
+
+<span class="sd">        U, w, U^t = svd(BB^t)</span>
+
+<span class="sd">    L is a diagonal matrix where the diagonal elements are w^(1/2).    </span>
+
+<span class="sd">    On initialisation an initial phase screen is calculated using an FFT based method.</span>
+<span class="sd">    When &#39;add_row&#39; is called, a new vector of phase is added to the phase screen.</span>
+
+<span class="sd">    Existing points to use are defined by a &quot;stencil&quot;, than is set to 0 for points not to use</span>
+<span class="sd">    and 1 for points to use. This makes this a generalised base class that can be used by </span>
+<span class="sd">    other infinite phase screen creation schemes, such as for Von Karmon turbulence or </span>
+<span class="sd">    Kolmogorov turbulence.</span>
+
+<span class="sd">    .. note::</span>
+<span class="sd">        The phase screen is returned on each iteration as a 2d array, with each element representing the phase </span>
+<span class="sd">        change in **radians**. This means that to obtain the physical phase distortion in nanometres, </span>
+<span class="sd">        it must be multiplied by (wavelength / (2*pi)), (where `wavellength` here is the same wavelength</span>
+<span class="sd">        in which r0 is given in the function arguments)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">set_X_coords</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Sets the coords of X, the new phase vector.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">X_coords</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">nx_size</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">X_coords</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">X_coords</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">nx_size</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">X_positions</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">X_coords</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">pixel_scale</span>
+
+    <span class="k">def</span> <span class="nf">set_stencil_coords</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Sets the Z coordinates, sections of the phase screen that will be used to create new phase</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">stencil</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">stencil_length</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">nx_size</span><span class="p">))</span>
+
+        <span class="n">max_n</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+            <span class="k">if</span> <span class="mi">2</span> <span class="o">**</span> <span class="p">(</span><span class="n">max_n</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span> <span class="o">&gt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">nx_size</span><span class="p">:</span>
+                <span class="n">max_n</span> <span class="o">-=</span> <span class="mi">1</span>
+                <span class="k">break</span>
+            <span class="n">max_n</span> <span class="o">+=</span> <span class="mi">1</span>
+
+        <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">max_n</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
+            <span class="n">col</span> <span class="o">=</span> <span class="nb">int</span><span class="p">((</span><span class="mi">2</span> <span class="o">**</span> <span class="p">(</span><span class="n">n</span> <span class="o">-</span> <span class="mi">1</span><span class="p">))</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+            <span class="n">n_points</span> <span class="o">=</span> <span class="p">(</span><span class="mi">2</span> <span class="o">**</span> <span class="p">(</span><span class="n">max_n</span> <span class="o">-</span> <span class="n">n</span><span class="p">))</span> <span class="o">+</span> <span class="mi">1</span>
+
+            <span class="n">coords</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">numpy</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">nx_size</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="n">n_points</span><span class="p">))</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="s1">&#39;int32&#39;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">stencil</span><span class="p">[</span><span class="n">col</span> <span class="o">-</span> <span class="mi">1</span><span class="p">][</span><span class="n">coords</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+
+        <span class="c1"># Now fill in tail of stencil</span>
+        <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">stencil_length_factor</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
+            <span class="n">col</span> <span class="o">=</span> <span class="n">n</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">nx_size</span> <span class="o">-</span> <span class="mi">1</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">stencil</span><span class="p">[</span><span class="n">col</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">nx_size</span> <span class="o">//</span> <span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">stencil_coords</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">numpy</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">stencil</span> <span class="o">==</span> <span class="mi">1</span><span class="p">))</span><span class="o">.</span><span class="n">T</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">stencil_positions</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">stencil_coords</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">pixel_scale</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">n_stencils</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">stencil_coords</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">calc_seperations</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Calculates the seperations between the phase points in the stencil and the new phase vector</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">positions</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">stencil_positions</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">X_positions</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">seperations</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="nb">len</span><span class="p">(</span><span class="n">positions</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="n">positions</span><span class="p">)))</span>
+
+        <span class="k">if</span> <span class="n">numba</span><span class="p">:</span>
+            <span class="n">calc_seperations_fast</span><span class="p">(</span><span class="n">positions</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">seperations</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="p">(</span><span class="n">x1</span><span class="p">,</span> <span class="n">y1</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">positions</span><span class="p">):</span>
+                <span class="k">for</span> <span class="n">j</span><span class="p">,</span> <span class="p">(</span><span class="n">x2</span><span class="p">,</span> <span class="n">y2</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">positions</span><span class="p">):</span>
+                    <span class="n">delta_x</span> <span class="o">=</span> <span class="n">x2</span> <span class="o">-</span> <span class="n">x1</span>
+                    <span class="n">delta_y</span> <span class="o">=</span> <span class="n">y2</span> <span class="o">-</span> <span class="n">y1</span>
+
+                    <span class="n">delta_r</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">delta_x</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">+</span> <span class="n">delta_y</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span>
+
+                    <span class="bp">self</span><span class="o">.</span><span class="n">seperations</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">delta_r</span>
+
+
+
+    <span class="k">def</span> <span class="nf">make_covmats</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Makes the covariance matrices required for adding new phase</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cov_mat</span> <span class="o">=</span> <span class="n">turb</span><span class="o">.</span><span class="n">phase_covariance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">seperations</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">r0</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">L0</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">cov_mat_zz</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cov_mat</span><span class="p">[:</span><span class="bp">self</span><span class="o">.</span><span class="n">n_stencils</span><span class="p">,</span> <span class="p">:</span><span class="bp">self</span><span class="o">.</span><span class="n">n_stencils</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cov_mat_xx</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cov_mat</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">n_stencils</span><span class="p">:,</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_stencils</span><span class="p">:]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cov_mat_zx</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cov_mat</span><span class="p">[:</span><span class="bp">self</span><span class="o">.</span><span class="n">n_stencils</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_stencils</span><span class="p">:]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cov_mat_xz</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cov_mat</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">n_stencils</span><span class="p">:,</span> <span class="p">:</span><span class="bp">self</span><span class="o">.</span><span class="n">n_stencils</span><span class="p">]</span>
+
+    <span class="k">def</span> <span class="nf">makeAMatrix</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Calculates the &quot;A&quot; matrix, that uses the existing data to find a new </span>
+<span class="sd">        component of the new phase vector.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">cf</span> <span class="o">=</span> <span class="n">linalg</span><span class="o">.</span><span class="n">cho_factor</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cov_mat_zz</span><span class="p">)</span>
+            <span class="n">inv_cov_zz</span> <span class="o">=</span> <span class="n">linalg</span><span class="o">.</span><span class="n">cho_solve</span><span class="p">(</span><span class="n">cf</span><span class="p">,</span> <span class="n">numpy</span><span class="o">.</span><span class="n">identity</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cov_mat_zz</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">A_mat</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cov_mat_xz</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">inv_cov_zz</span><span class="p">)</span>
+        <span class="k">except</span> <span class="n">linalg</span><span class="o">.</span><span class="n">LinAlgError</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Cholesky solve failed. Performing least squares inversion...&quot;</span><span class="p">)</span>
+            <span class="n">inv_cov_zz</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">lstsq</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cov_mat_zz</span><span class="p">,</span> <span class="n">numpy</span><span class="o">.</span><span class="n">identity</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cov_mat_zz</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="n">rcond</span><span class="o">=</span><span class="mf">1e-8</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">A_mat</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cov_mat_xz</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">inv_cov_zz</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+
+    <span class="k">def</span> <span class="nf">makeBMatrix</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Calculates the &quot;B&quot; matrix, that turns a random vector into a component of the new phase.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Can make initial BBt matrix first</span>
+        <span class="n">BBt</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cov_mat_xx</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">A_mat</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cov_mat_zx</span><span class="p">)</span>
+
+        <span class="c1"># Then do SVD to get B matrix</span>
+        <span class="n">u</span><span class="p">,</span> <span class="n">W</span><span class="p">,</span> <span class="n">ut</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">svd</span><span class="p">(</span><span class="n">BBt</span><span class="p">)</span>
+
+        <span class="n">L_mat</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">nx_size</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">nx_size</span><span class="p">))</span>
+        <span class="n">numpy</span><span class="o">.</span><span class="n">fill_diagonal</span><span class="p">(</span><span class="n">L_mat</span><span class="p">,</span> <span class="n">numpy</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">W</span><span class="p">))</span>
+
+        <span class="c1"># Now use sqrt(eigenvalues) to get B matrix</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">B_mat</span> <span class="o">=</span> <span class="n">u</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">L_mat</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">make_initial_screen</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Makes the initial screen usign FFT method that can be extended </span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="c1"># phase screen will make it *really* random if no seed at all given.</span>
+        <span class="c1"># If a seed is here, screen must be repeatable wiht same seed</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_R</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">default_rng</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">random_seed</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_scrn</span> <span class="o">=</span> <span class="n">phasescreen</span><span class="o">.</span><span class="n">ft_phase_screen</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">r0</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">stencil_length</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">pixel_scale</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">L0</span><span class="p">,</span> <span class="mf">1e-10</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_R</span>
+        <span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_scrn</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_scrn</span><span class="p">[:,</span> <span class="p">:</span><span class="bp">self</span><span class="o">.</span><span class="n">nx_size</span><span class="p">]</span>
+
+    <span class="k">def</span> <span class="nf">get_new_row</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">random_data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_R</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">nx_size</span><span class="p">)</span>
+
+        <span class="n">stencil_data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_scrn</span><span class="p">[(</span><span class="bp">self</span><span class="o">.</span><span class="n">stencil_coords</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">stencil_coords</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">])]</span>
+        <span class="n">new_row</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">A_mat</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">stencil_data</span><span class="p">)</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">B_mat</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">random_data</span><span class="p">)</span>
+
+        <span class="n">new_row</span><span class="o">.</span><span class="n">shape</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">nx_size</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">new_row</span>
+
+    <span class="k">def</span> <span class="nf">add_row</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Adds a new row to the phase screen and removes old ones.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">new_row</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_new_row</span><span class="p">()</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_scrn</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">new_row</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_scrn</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)[:</span><span class="bp">self</span><span class="o">.</span><span class="n">stencil_length</span><span class="p">,</span> <span class="p">:</span><span class="bp">self</span><span class="o">.</span><span class="n">nx_size</span><span class="p">]</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">scrn</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">scrn</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        The current phase map held in the PhaseScreen object in radians.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_scrn</span><span class="p">[:</span><span class="bp">self</span><span class="o">.</span><span class="n">requested_nx_size</span><span class="p">,</span> <span class="p">:</span><span class="bp">self</span><span class="o">.</span><span class="n">requested_nx_size</span><span class="p">]</span>
+
+
+<div class="viewcode-block" id="PhaseScreenVonKarman">
+<a class="viewcode-back" href="../../../turbulence.html#aotools.turbulence.infinitephasescreen.PhaseScreenVonKarman">[docs]</a>
+<span class="k">class</span> <span class="nc">PhaseScreenVonKarman</span><span class="p">(</span><span class="n">PhaseScreen</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A &quot;Phase Screen&quot; for use in AO simulation with Von Karmon statistics.</span>
+
+<span class="sd">    This represents the phase addition light experiences when passing through atmospheric</span>
+<span class="sd">    turbulence. Unlike other phase screen generation techniques that translate a large static</span>
+<span class="sd">    screen, this method keeps a small section of phase, and extends it as necessary for as many</span>
+<span class="sd">    steps as required. This can significantly reduce memory consumption at the expense of more</span>
+<span class="sd">    processing power required.</span>
+
+<span class="sd">    The technique is described in a paper by Assemat and Wilson, 2006. It essentially assumes that</span>
+<span class="sd">    there are two matrices, &quot;A&quot; and &quot;B&quot;, that can be used to extend an existing phase screen.</span>
+<span class="sd">    A single row or column of new phase can be represented by</span>
+
+<span class="sd">        X = A.Z + B.b</span>
+
+<span class="sd">    where X is the new phase vector, Z is some number of columns of the existing screen,</span>
+<span class="sd">    and b is a random vector with gaussian statistics.</span>
+
+<span class="sd">    This object calculates the A and B matrices using an expression of the phase covariance when it</span>
+<span class="sd">    is initialised. Calculating A is straightforward through the relationship:</span>
+
+<span class="sd">        A =  Cov_xz . (Cov_zz)^(-1).</span>
+
+<span class="sd">    B is less trivial.</span>
+
+<span class="sd">        BB^t = Cov_xx - A.Cov_zx</span>
+
+<span class="sd">    (where B^t is the transpose of B) is a symmetric matrix, hence B can be expressed as</span>
+
+<span class="sd">        B = UL,</span>
+
+<span class="sd">    where U and L are obtained from the svd for BB^t</span>
+
+<span class="sd">        U, w, U^t = svd(BB^t)</span>
+
+<span class="sd">    L is a diagonal matrix where the diagonal elements are w^(1/2).</span>
+
+<span class="sd">    On initialisation an initial phase screen is calculated using an FFT based method.</span>
+<span class="sd">    When ``add_row`` is called, a new vector of phase is added to the phase screen using `nCols`</span>
+<span class="sd">    columns of previous phase. Assemat &amp; Wilson claim that two columns are adequate for good</span>
+<span class="sd">    atmospheric statistics. The phase in the screen data is always accessed as ``&lt;phasescreen&gt;.scrn`` and is in radians.</span>
+
+<span class="sd">        .. note::</span>
+<span class="sd">        The phase screen is returned on each iteration as a 2d array, with each element representing the phase </span>
+<span class="sd">        change in **radians**. This means that to obtain the physical phase distortion in nanometres, </span>
+<span class="sd">        it must be multiplied by (wavelength / (2*pi)), (where `wavellength` here is the same wavelength</span>
+<span class="sd">        in which r0 is given in the function arguments)</span>
+
+<span class="sd">    Parameters:</span>
+<span class="sd">        nx_size (int): Size of phase screen (NxN)</span>
+<span class="sd">        pixel_scale(float): Size of each phase pixel in metres</span>
+<span class="sd">        r0 (float): fried parameter (metres)</span>
+<span class="sd">        L0 (float): Outer scale (metres)</span>
+<span class="sd">        random_seed (int, optional): seed for the random number generator</span>
+<span class="sd">        n_columns (int, optional): Number of columns to use to continue screen, default is 2</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">nx_size</span><span class="p">,</span> <span class="n">pixel_scale</span><span class="p">,</span> <span class="n">r0</span><span class="p">,</span> <span class="n">L0</span><span class="p">,</span> <span class="n">random_seed</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">n_columns</span><span class="o">=</span><span class="mi">2</span><span class="p">):</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">n_columns</span> <span class="o">=</span> <span class="n">n_columns</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">requested_nx_size</span> <span class="o">=</span> <span class="n">nx_size</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">nx_size</span> <span class="o">=</span> <span class="n">nx_size</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pixel_scale</span> <span class="o">=</span> <span class="n">pixel_scale</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">r0</span> <span class="o">=</span> <span class="n">r0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">L0</span> <span class="o">=</span> <span class="n">L0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">stencil_length_factor</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">stencil_length</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">nx_size</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">random_seed</span> <span class="o">=</span> <span class="n">random_seed</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_X_coords</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_stencil_coords</span><span class="p">()</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">calc_seperations</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">make_covmats</span><span class="p">()</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">makeAMatrix</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">makeBMatrix</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">make_initial_screen</span><span class="p">()</span>
+
+
+    <span class="k">def</span> <span class="nf">set_stencil_coords</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">stencil</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">stencil_length</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">nx_size</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">stencil</span><span class="p">[:</span><span class="bp">self</span><span class="o">.</span><span class="n">n_columns</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">stencil_coords</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">numpy</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">stencil</span><span class="o">==</span><span class="mi">1</span><span class="p">))</span><span class="o">.</span><span class="n">T</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">stencil_positions</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">stencil_coords</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">pixel_scale</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">n_stencils</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">stencil_coords</span><span class="p">)</span></div>
+
+
+
+<span class="k">def</span> <span class="nf">find_allowed_size</span><span class="p">(</span><span class="n">nx_size</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Finds the next largest &quot;allowed size&quot; for the Fried Phase Screen method</span>
+<span class="sd">    </span>
+<span class="sd">    Parameters:</span>
+<span class="sd">        nx_size (int): Requested size</span>
+<span class="sd">    </span>
+<span class="sd">    Returns:</span>
+<span class="sd">        int: Next allowed size</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">n</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">while</span> <span class="p">(</span><span class="mi">2</span> <span class="o">**</span> <span class="n">n</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">nx_size</span><span class="p">:</span>
+        <span class="n">n</span> <span class="o">+=</span> <span class="mi">1</span>
+
+    <span class="n">nx_size</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">**</span> <span class="n">n</span> <span class="o">+</span> <span class="mi">1</span>
+    <span class="k">return</span> <span class="n">nx_size</span>
+
+
+<div class="viewcode-block" id="PhaseScreenKolmogorov">
+<a class="viewcode-back" href="../../../turbulence.html#aotools.turbulence.infinitephasescreen.PhaseScreenKolmogorov">[docs]</a>
+<span class="k">class</span> <span class="nc">PhaseScreenKolmogorov</span><span class="p">(</span><span class="n">PhaseScreen</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A &quot;Phase Screen&quot; for use in AO simulation using the Fried method for Kolmogorov turbulence.</span>
+
+<span class="sd">    This represents the phase addition light experiences when passing through atmospheric </span>
+<span class="sd">    turbulence. Unlike other phase screen generation techniques that translate a large static </span>
+<span class="sd">    screen, this method keeps a small section of phase, and extends it as neccessary for as many </span>
+<span class="sd">    steps as required. This can significantly reduce memory consuption at the expense of more </span>
+<span class="sd">    processing power required.</span>
+
+<span class="sd">    The technique is described in a paper by Assemat and Wilson, 2006 and expanded upon by Fried, 2008.</span>
+<span class="sd">    It essentially assumes that there are two matrices, &quot;A&quot; and &quot;B&quot;,</span>
+<span class="sd">    that can be used to extend an existing phase screen.</span>
+<span class="sd">    A single row or column of new phase can be represented by </span>
+
+<span class="sd">        X = A.Z + B.b</span>
+
+<span class="sd">    where X is the new phase vector, Z is some data from the existing screen,</span>
+<span class="sd">    and b is a random vector with gaussian statistics.</span>
+
+<span class="sd">    This object calculates the A and B matrices using an expression of the phase covariance when it</span>
+<span class="sd">    is initialised. Calculating A is straightforward through the relationship:</span>
+
+<span class="sd">        A =  Cov_xz . (Cov_zz)^(-1).</span>
+
+<span class="sd">    B is less trivial.</span>
+
+<span class="sd">        BB^t = Cov_xx - A.Cov_zx</span>
+
+<span class="sd">    (where B^t is the transpose of B) is a symmetric matrix, hence B can be expressed as </span>
+
+<span class="sd">        B = UL, </span>
+
+<span class="sd">    where U and L are obtained from the svd for BB^t</span>
+
+<span class="sd">        U, w, U^t = svd(BB^t)</span>
+
+<span class="sd">    L is a diagonal matrix where the diagonal elements are w^(1/2).    </span>
+
+<span class="sd">    The Z data is taken from points in a &quot;stencil&quot; defined by Fried that samples the entire screen.</span>
+<span class="sd">    An additional &quot;reference point&quot; is also considered, that is picked from a point separate from teh stencil </span>
+<span class="sd">    and applied on each iteration such that the new phase equation becomes:</span>
+<span class="sd">    </span>
+<span class="sd">    On initialisation an initial phase screen is calculated using an FFT based method.</span>
+<span class="sd">    When ``add_row`` is called, a new vector of phase is added to the phase screen. The phase in the screen data</span>
+<span class="sd">    is always accessed as ``&lt;phasescreen&gt;.scrn`` and is in radians.</span>
+
+<span class="sd">    .. note::</span>
+<span class="sd">        The phase screen is returned on each iteration as a 2d array, with each element representing the phase </span>
+<span class="sd">        change in **radians**. This means that to obtain the physical phase distortion in nanometres, </span>
+<span class="sd">        it must be multiplied by (wavelength / (2*pi)), (where `wavellength` here is the same wavelength</span>
+<span class="sd">        in which r0 is given in the function arguments)</span>
+
+<span class="sd">    Parameters:</span>
+<span class="sd">        nx_size (int): Size of phase screen (NxN)</span>
+<span class="sd">        pixel_scale(float): Size of each phase pixel in metres</span>
+<span class="sd">        r0 (float): fried parameter (metres)</span>
+<span class="sd">        L0 (float): Outer scale (metres)</span>
+<span class="sd">        random_seed (int, optional): seed for the random number generator</span>
+<span class="sd">        stencil_length_factor (int, optional): How much longer is the stencil than the desired phase? default is 4</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">nx_size</span><span class="p">,</span> <span class="n">pixel_scale</span><span class="p">,</span> <span class="n">r0</span><span class="p">,</span> <span class="n">L0</span><span class="p">,</span> <span class="n">random_seed</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">stencil_length_factor</span><span class="o">=</span><span class="mi">4</span><span class="p">):</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">requested_nx_size</span> <span class="o">=</span> <span class="n">nx_size</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">nx_size</span> <span class="o">=</span> <span class="n">find_allowed_size</span><span class="p">(</span><span class="n">nx_size</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pixel_scale</span> <span class="o">=</span> <span class="n">pixel_scale</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">r0</span> <span class="o">=</span> <span class="n">r0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">L0</span> <span class="o">=</span> <span class="n">L0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">stencil_length_factor</span> <span class="o">=</span> <span class="n">stencil_length_factor</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">stencil_length</span> <span class="o">=</span> <span class="n">stencil_length_factor</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">nx_size</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">random_seed</span> <span class="o">=</span> <span class="n">random_seed</span>
+
+        <span class="c1"># Coordinate of Fried&#39;s &quot;reference point&quot; that stops the screen diverging</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">reference_coord</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_X_coords</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_stencil_coords</span><span class="p">()</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">calc_seperations</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">make_covmats</span><span class="p">()</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">makeAMatrix</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">makeBMatrix</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">make_initial_screen</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">get_new_row</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">random_data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_R</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">nx_size</span><span class="p">)</span>
+
+        <span class="n">stencil_data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_scrn</span><span class="p">[(</span><span class="bp">self</span><span class="o">.</span><span class="n">stencil_coords</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">stencil_coords</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">])]</span>
+
+        <span class="n">reference_value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_scrn</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">reference_coord</span><span class="p">]</span>
+
+        <span class="n">new_row</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">A_mat</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">stencil_data</span> <span class="o">-</span> <span class="n">reference_value</span><span class="p">)</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">B_mat</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">random_data</span><span class="p">)</span> <span class="o">+</span> <span class="n">reference_value</span>
+
+        <span class="n">new_row</span><span class="o">.</span><span class="n">shape</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">nx_size</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">new_row</span>
+
+
+    <span class="k">def</span> <span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">scrn</span><span class="p">)</span></div>
+
+    
+
+
+<span class="nd">@numba</span><span class="o">.</span><span class="n">jit</span><span class="p">(</span><span class="n">nopython</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">parallel</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">calc_seperations_fast</span><span class="p">(</span><span class="n">positions</span><span class="p">,</span> <span class="n">seperations</span><span class="p">):</span>
+
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">numba</span><span class="o">.</span><span class="n">prange</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">positions</span><span class="p">)):</span>
+        <span class="n">x1</span><span class="p">,</span> <span class="n">y1</span> <span class="o">=</span> <span class="n">positions</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">positions</span><span class="p">)):</span>
+            <span class="n">x2</span><span class="p">,</span> <span class="n">y2</span> <span class="o">=</span> <span class="n">positions</span><span class="p">[</span><span class="n">j</span><span class="p">]</span>
+            <span class="n">delta_x</span> <span class="o">=</span> <span class="n">x2</span> <span class="o">-</span> <span class="n">x1</span>
+            <span class="n">delta_y</span> <span class="o">=</span> <span class="n">y2</span> <span class="o">-</span> <span class="n">y1</span>
+
+            <span class="n">delta_r</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">delta_x</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">+</span> <span class="n">delta_y</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span>
+
+            <span class="n">seperations</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">delta_r</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2019, The Authors.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

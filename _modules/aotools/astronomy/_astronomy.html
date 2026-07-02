@@ -1,0 +1,230 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>aotools.astronomy._astronomy &mdash; AOtools 0.1.dev477+g8f38ff7c1.d20260605 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=fa44fd50" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=867f5289"></script>
+      <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            AOtools
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../turbulence.html">Atmospheric Turbulence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../image_processing.html">Image Processing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../zernike.html">Circular Functions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../pupil.html">Telescope Pupils</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../wfs.html">Wavefront Sensors</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../opticalpropagation.html">Optical Propagation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../astronomy.html">Astronomical Functions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../fft.html">Normalised Fourier Transforms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../interpolation.html">Interpolation</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">AOtools</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">aotools.astronomy._astronomy</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for aotools.astronomy._astronomy</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">numpy</span>
+
+<span class="c1"># Dictionary of flux values at the top of the atmosphere</span>
+<span class="c1">#                 band, lamda, dLamda, m=0 flux (Jy)</span>
+<span class="n">FLUX_DICTIONARY</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;U&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mf">0.36</span><span class="p">,</span> <span class="mf">0.15</span><span class="p">,</span> <span class="mi">1810</span><span class="p">],</span>
+                <span class="s1">&#39;B&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mf">0.44</span><span class="p">,</span> <span class="mf">0.22</span><span class="p">,</span> <span class="mi">4260</span><span class="p">],</span>
+                <span class="s1">&#39;V&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mf">0.55</span><span class="p">,</span> <span class="mf">0.16</span><span class="p">,</span> <span class="mi">3640</span><span class="p">],</span>
+                <span class="s1">&#39;R&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mf">0.64</span><span class="p">,</span> <span class="mf">0.23</span><span class="p">,</span> <span class="mi">3080</span><span class="p">],</span>
+                <span class="s1">&#39;I&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">0.19</span><span class="p">,</span> <span class="mi">2550</span><span class="p">],</span>
+                <span class="s1">&#39;J&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mf">1.26</span><span class="p">,</span> <span class="mf">0.16</span><span class="p">,</span> <span class="mi">1600</span><span class="p">],</span>
+                <span class="s1">&#39;H&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mf">1.60</span><span class="p">,</span> <span class="mf">0.23</span><span class="p">,</span> <span class="mi">1080</span><span class="p">],</span>
+                <span class="s1">&#39;K&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mf">2.22</span><span class="p">,</span> <span class="mf">0.23</span><span class="p">,</span> <span class="mi">670</span><span class="p">],</span>
+                <span class="s1">&#39;g&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mf">0.52</span><span class="p">,</span> <span class="mf">0.14</span><span class="p">,</span> <span class="mi">3730</span><span class="p">],</span>
+                <span class="s1">&#39;r&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mf">0.67</span><span class="p">,</span> <span class="mf">0.14</span><span class="p">,</span> <span class="mi">4490</span><span class="p">],</span>
+                <span class="s1">&#39;i&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mf">0.79</span><span class="p">,</span> <span class="mf">0.16</span><span class="p">,</span> <span class="mi">4760</span><span class="p">],</span>
+                <span class="s1">&#39;z&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mf">0.91</span><span class="p">,</span> <span class="mf">0.13</span><span class="p">,</span> <span class="mi">4810</span><span class="p">]}</span>
+
+
+<div class="viewcode-block" id="photons_per_mag">
+<a class="viewcode-back" href="../../../astronomy.html#aotools.astronomy.photons_per_mag">[docs]</a>
+<span class="k">def</span> <span class="nf">photons_per_mag</span><span class="p">(</span><span class="n">mag</span><span class="p">,</span> <span class="n">mask</span><span class="p">,</span> <span class="n">pixel_scale</span><span class="p">,</span> <span class="n">wvlBand</span><span class="p">,</span> <span class="n">exposure_time</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Calculates the photon flux for a given aperture, star magnitude and wavelength band</span>
+
+<span class="sd">    Parameters:</span>
+<span class="sd">        mag (float): Star apparent magnitude</span>
+<span class="sd">        mask (ndarray): 2-d pupil mask array, 1 is transparent, 0 opaque</span>
+<span class="sd">        pixel_scale (float): size in metres of each pixel in mask</span>
+<span class="sd">        wvlBand (float): length of wavelength band in nanometres</span>
+<span class="sd">        exposure_time (float): Exposure time in seconds</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        float: number of photons</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># Area defined in cm, so turn m to cm</span>
+    <span class="n">area</span> <span class="o">=</span> <span class="n">mask</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span> <span class="o">*</span> <span class="n">pixel_scale</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">*</span> <span class="mi">100</span> <span class="o">**</span> <span class="mi">2</span>
+
+    <span class="n">photonPerSecPerAreaPerWvl</span> <span class="o">=</span> <span class="mi">1000</span> <span class="o">*</span> <span class="p">(</span><span class="mi">10</span><span class="o">**</span><span class="p">(</span><span class="o">-</span><span class="nb">float</span><span class="p">(</span><span class="n">mag</span><span class="p">)</span><span class="o">/</span><span class="mf">2.5</span><span class="p">))</span>
+
+    <span class="c1"># Wavelength defined in Angstroms</span>
+    <span class="n">photonPerSecPerArea</span> <span class="o">=</span> <span class="n">photonPerSecPerAreaPerWvl</span> <span class="o">*</span> <span class="n">wvlBand</span><span class="o">*</span><span class="mi">10</span>
+
+    <span class="n">photonPerSec</span> <span class="o">=</span> <span class="n">photonPerSecPerArea</span> <span class="o">*</span> <span class="n">area</span>
+
+    <span class="n">photons</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">photonPerSec</span> <span class="o">*</span> <span class="n">exposure_time</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">photons</span></div>
+
+
+
+<div class="viewcode-block" id="photons_per_band">
+<a class="viewcode-back" href="../../../astronomy.html#aotools.astronomy.photons_per_band">[docs]</a>
+<span class="k">def</span> <span class="nf">photons_per_band</span><span class="p">(</span><span class="n">mag</span><span class="p">,</span> <span class="n">mask</span><span class="p">,</span> <span class="n">pxlScale</span><span class="p">,</span> <span class="n">expTime</span><span class="p">,</span> <span class="n">waveband</span><span class="o">=</span><span class="s1">&#39;V&#39;</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Calculates the photon flux for a given aperture, star magnitude and wavelength band</span>
+
+<span class="sd">        Parameters:</span>
+<span class="sd">            mag (float): Star apparent magnitude</span>
+<span class="sd">            mask (ndarray): 2-d pupil mask array, 1 is transparent, 0 opaque</span>
+<span class="sd">            pxlScale (float): size in metres of each pixel in mask</span>
+<span class="sd">            expTime (float): Exposure time in seconds</span>
+<span class="sd">            waveband (string): Waveband</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            float: number of photons</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+
+        <span class="c1">#Area defined m</span>
+        <span class="n">area</span> <span class="o">=</span> <span class="n">mask</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span> <span class="o">*</span> <span class="n">pxlScale</span><span class="o">**</span><span class="mi">2</span>
+
+        <span class="c1"># Flux density photons s^-1 m^-2</span>
+        <span class="n">flux_photons</span> <span class="o">=</span> <span class="n">magnitude_to_flux</span><span class="p">(</span><span class="n">mag</span><span class="p">,</span><span class="n">waveband</span><span class="p">)</span>
+
+        <span class="c1"># Total photons</span>
+        <span class="n">photons</span> <span class="o">=</span> <span class="n">flux_photons</span> <span class="o">*</span> <span class="n">expTime</span> <span class="o">*</span> <span class="n">area</span>
+
+        <span class="n">photons</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">photons</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">photons</span></div>
+
+
+
+<div class="viewcode-block" id="magnitude_to_flux">
+<a class="viewcode-back" href="../../../astronomy.html#aotools.astronomy.magnitude_to_flux">[docs]</a>
+<span class="k">def</span> <span class="nf">magnitude_to_flux</span><span class="p">(</span><span class="n">magnitude</span><span class="p">,</span> <span class="n">waveband</span><span class="o">=</span><span class="s1">&#39;V&#39;</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Converts apparent magnitude to a flux of photons</span>
+<span class="sd">    </span>
+<span class="sd">    Parameters:</span>
+<span class="sd">        magnitude (float): Star apparent magnitude</span>
+<span class="sd">        waveband (string): Waveband of the stellar magnitude, can be U, B, V, R, I, J, H, K, g, r, i, z</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        float: Number of photons emitted by the object per second per meter squared</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">flux_Jy</span> <span class="o">=</span> <span class="n">FLUX_DICTIONARY</span><span class="p">[</span><span class="n">waveband</span><span class="p">][</span><span class="mi">2</span><span class="p">]</span> <span class="o">*</span> <span class="mi">10</span> <span class="o">**</span> <span class="p">(</span><span class="o">-</span><span class="mf">0.4</span> <span class="o">*</span> <span class="n">magnitude</span><span class="p">)</span>
+    <span class="n">flux_photons</span> <span class="o">=</span> <span class="n">flux_Jy</span> <span class="o">*</span> <span class="mf">1.51E7</span> <span class="o">*</span> <span class="n">FLUX_DICTIONARY</span><span class="p">[</span><span class="n">waveband</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span>  <span class="c1"># photons sec^-1 m^-2</span>
+    <span class="k">return</span> <span class="n">flux_photons</span></div>
+
+
+
+<div class="viewcode-block" id="flux_to_magnitude">
+<a class="viewcode-back" href="../../../astronomy.html#aotools.astronomy.flux_to_magnitude">[docs]</a>
+<span class="k">def</span> <span class="nf">flux_to_magnitude</span><span class="p">(</span><span class="n">flux</span><span class="p">,</span> <span class="n">waveband</span><span class="o">=</span><span class="s1">&#39;V&#39;</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Converts incident flux of photons to the apparent magnitude</span>
+<span class="sd">    </span>
+<span class="sd">    Parameters:</span>
+<span class="sd">        flux (float): Number of photons received from an object per second per meter squared</span>
+<span class="sd">        waveband (string): Waveband of the measured flux, can be U, B, V, R, I, J, H, K, g, r, i, z</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        float: Apparent magnitude</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">flux_Jy</span> <span class="o">=</span> <span class="n">flux</span> <span class="o">/</span> <span class="p">(</span><span class="mf">1.51E7</span> <span class="o">*</span> <span class="n">FLUX_DICTIONARY</span><span class="p">[</span><span class="n">waveband</span><span class="p">][</span><span class="mi">1</span><span class="p">])</span>
+    <span class="n">magnitude</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="o">-</span><span class="mf">2.5</span> <span class="o">*</span> <span class="n">numpy</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">flux_Jy</span> <span class="o">/</span> <span class="n">FLUX_DICTIONARY</span><span class="p">[</span><span class="n">waveband</span><span class="p">][</span><span class="mi">2</span><span class="p">]))</span>
+    <span class="k">return</span> <span class="n">magnitude</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2019, The Authors.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

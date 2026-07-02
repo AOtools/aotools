@@ -1,0 +1,332 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Image Processing &mdash; AOtools 0.1.dev477+g8f38ff7c1.d20260605 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=fa44fd50" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=867f5289"></script>
+      <script src="_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Circular Functions" href="zernike.html" />
+    <link rel="prev" title="Atmospheric Turbulence" href="turbulence.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            AOtools
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="turbulence.html">Atmospheric Turbulence</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Image Processing</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#centroiders">Centroiders</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#aotools.image_processing.centroiders.brightest_pixel"><code class="docutils literal notranslate"><span class="pre">brightest_pixel()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#aotools.image_processing.centroiders.centre_of_gravity"><code class="docutils literal notranslate"><span class="pre">centre_of_gravity()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#aotools.image_processing.centroiders.correlation_centroid"><code class="docutils literal notranslate"><span class="pre">correlation_centroid()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#aotools.image_processing.centroiders.cross_correlate"><code class="docutils literal notranslate"><span class="pre">cross_correlate()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#aotools.image_processing.centroiders.quadCell"><code class="docutils literal notranslate"><span class="pre">quadCell()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#contrast">Contrast</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#aotools.image_processing.contrast.image_contrast"><code class="docutils literal notranslate"><span class="pre">image_contrast()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#aotools.image_processing.contrast.rms_contrast"><code class="docutils literal notranslate"><span class="pre">rms_contrast()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#psf-analysis">PSF Analysis</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#aotools.image_processing.psf.azimuthal_average"><code class="docutils literal notranslate"><span class="pre">azimuthal_average()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#aotools.image_processing.psf.encircled_energy"><code class="docutils literal notranslate"><span class="pre">encircled_energy()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="zernike.html">Circular Functions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="pupil.html">Telescope Pupils</a></li>
+<li class="toctree-l1"><a class="reference internal" href="wfs.html">Wavefront Sensors</a></li>
+<li class="toctree-l1"><a class="reference internal" href="opticalpropagation.html">Optical Propagation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="astronomy.html">Astronomical Functions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="fft.html">Normalised Fourier Transforms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="interpolation.html">Interpolation</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">AOtools</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Image Processing</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/image_processing.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-aotools.image_processing.centroiders">
+<span id="image-processing"></span><h1>Image Processing<a class="headerlink" href="#module-aotools.image_processing.centroiders" title="Link to this heading"></a></h1>
+<section id="centroiders">
+<h2>Centroiders<a class="headerlink" href="#centroiders" title="Link to this heading"></a></h2>
+<p>Functions for centroiding images.</p>
+</section>
+<dl class="py function">
+<dt class="sig sig-object py" id="aotools.image_processing.centroiders.brightest_pixel">
+<span class="sig-prename descclassname"><span class="pre">aotools.image_processing.centroiders.</span></span><span class="sig-name descname"><span class="pre">brightest_pixel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">img</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">threshold</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/aotools/image_processing/centroiders.html#brightest_pixel"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#aotools.image_processing.centroiders.brightest_pixel" title="Link to this definition"></a></dt>
+<dd><p>Centroids using brightest Pixel Algorithm
+(A. G. Basden et al,  MNRAS, 2011)</p>
+<p>Finds the nPxlsth brightest pixel, subtracts that value from frame,
+sets anything below 0 to 0, and finally takes centroid.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>img</strong> (<em>ndarray</em>) – 2d or greater rank array of imgs to centroid</p></li>
+<li><p><strong>threshold</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>) – Fraction of pixels to use for centroid</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Array of centroid values</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>ndarray</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="aotools.image_processing.centroiders.centre_of_gravity">
+<span class="sig-prename descclassname"><span class="pre">aotools.image_processing.centroiders.</span></span><span class="sig-name descname"><span class="pre">centre_of_gravity</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">img</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">threshold</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_threshold</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/aotools/image_processing/centroiders.html#centre_of_gravity"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#aotools.image_processing.centroiders.centre_of_gravity" title="Link to this definition"></a></dt>
+<dd><p>Centroids an image, or an array of images.
+Centroids over the last 2 dimensions.
+Sets all values under “threshold*max_value” to zero before centroiding
+Origin at 0,0 index of img.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>img</strong> (<em>ndarray</em>) – ([n, ]y, x) 2d or greater rank array of imgs to centroid</p></li>
+<li><p><strong>threshold</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>) – Percentage of max value under which pixels set to 0</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Array of centroid values (2[, n])</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>ndarray</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="aotools.image_processing.centroiders.correlation_centroid">
+<span class="sig-prename descclassname"><span class="pre">aotools.image_processing.centroiders.</span></span><span class="sig-name descname"><span class="pre">correlation_centroid</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">im</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ref</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">threshold</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">padding</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/aotools/image_processing/centroiders.html#correlation_centroid"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#aotools.image_processing.centroiders.correlation_centroid" title="Link to this definition"></a></dt>
+<dd><p>Correlation Centroider, currently only works for 3d im shape.
+Performs a simple thresholded COM on the correlation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>im</strong> – sub-aperture images (t, y, x)</p></li>
+<li><p><strong>ref</strong> – reference image (y, x)</p></li>
+<li><p><strong>threshold</strong> – fractional threshold for COM (0=all pixels, 1=brightest pixel)</p></li>
+<li><p><strong>padding</strong> – factor to zero-pad arrays in Fourier transforms</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>centroids of im (2, t), given in order x, y</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>ndarray</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="aotools.image_processing.centroiders.cross_correlate">
+<span class="sig-prename descclassname"><span class="pre">aotools.image_processing.centroiders.</span></span><span class="sig-name descname"><span class="pre">cross_correlate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">padding</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/aotools/image_processing/centroiders.html#cross_correlate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#aotools.image_processing.centroiders.cross_correlate" title="Link to this definition"></a></dt>
+<dd><p>2D convolution using FFT, use to generate cross-correlations.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>x</strong> (<em>array</em>) – subap image</p></li>
+<li><p><strong>y</strong> (<em>array</em>) – reference image</p></li>
+<li><p><strong>padding</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – Factor to zero-pad arrays in Fourier transforms</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>cross-correlation of x and y</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>ndarray</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="aotools.image_processing.centroiders.quadCell">
+<span class="sig-prename descclassname"><span class="pre">aotools.image_processing.centroiders.</span></span><span class="sig-name descname"><span class="pre">quadCell</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">img</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/aotools/image_processing/centroiders.html#quadCell"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#aotools.image_processing.centroiders.quadCell" title="Link to this definition"></a></dt>
+<dd><p>Centroider to be used for 2x2 images.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>img</strong> – 2d or greater rank array, where centroiding performed over last 2 dimensions</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Array of centroid values</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>ndarray</p>
+</dd>
+</dl>
+</dd></dl>
+
+<section id="contrast">
+<span id="module-aotools.image_processing.contrast"></span><h2>Contrast<a class="headerlink" href="#contrast" title="Link to this heading"></a></h2>
+<p>Functions for calculating the contrast of an image.</p>
+</section>
+<dl class="py function">
+<dt class="sig sig-object py" id="aotools.image_processing.contrast.image_contrast">
+<span class="sig-prename descclassname"><span class="pre">aotools.image_processing.contrast.</span></span><span class="sig-name descname"><span class="pre">image_contrast</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">image</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/aotools/image_processing/contrast.html#image_contrast"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#aotools.image_processing.contrast.image_contrast" title="Link to this definition"></a></dt>
+<dd><p>Calculates the ‘Michelson’ contrast.</p>
+<dl class="simple">
+<dt>Uses a method by Michelson (Michelson, A. (1927). Studies in Optics. U. of Chicago Press.), to calculate the contrast ratio of an image. Uses the formula:</dt><dd><p>(img_max - img_min)/(img_max + img_min)</p>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>image</strong> (<em>ndarray</em>) – Image array</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Contrast value</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)">float</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="aotools.image_processing.contrast.rms_contrast">
+<span class="sig-prename descclassname"><span class="pre">aotools.image_processing.contrast.</span></span><span class="sig-name descname"><span class="pre">rms_contrast</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">image</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/aotools/image_processing/contrast.html#rms_contrast"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#aotools.image_processing.contrast.rms_contrast" title="Link to this definition"></a></dt>
+<dd><p>Calculates the RMS contrast - basically the standard deviation of the image</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>image</strong> (<em>ndarray</em>) – Image array</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Contrast value</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)">float</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<section id="psf-analysis">
+<span id="module-aotools.image_processing.psf"></span><h2>PSF Analysis<a class="headerlink" href="#psf-analysis" title="Link to this heading"></a></h2>
+<p>Functions for analysing PSFs.</p>
+</section>
+<dl class="py function">
+<dt class="sig sig-object py" id="aotools.image_processing.psf.azimuthal_average">
+<span class="sig-prename descclassname"><span class="pre">aotools.image_processing.psf.</span></span><span class="sig-name descname"><span class="pre">azimuthal_average</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/aotools/image_processing/psf.html#azimuthal_average"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#aotools.image_processing.psf.azimuthal_average" title="Link to this definition"></a></dt>
+<dd><p>Measure the azimuthal average of a 2d array</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>data</strong> (<em>ndarray</em>) – A 2-d array of data</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A 1-d vector of the azimuthal average</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>ndarray</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="aotools.image_processing.psf.encircled_energy">
+<span class="sig-prename descclassname"><span class="pre">aotools.image_processing.psf.</span></span><span class="sig-name descname"><span class="pre">encircled_energy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fraction</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">center</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eeDiameter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/aotools/image_processing/psf.html#encircled_energy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#aotools.image_processing.psf.encircled_energy" title="Link to this definition"></a></dt>
+<dd><p>Return the encircled energy diameter for a given fraction
+(default is ee50d).
+Can also return the encircled energy function.
+Translated and extended from YAO.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>data</strong> – 2-d array</p></li>
+<li><p><strong>fraction</strong> – energy fraction for diameter calculation
+default = 0.5</p></li>
+<li><p><strong>center</strong> – default = center of image</p></li>
+<li><p><strong>eeDiameter</strong> – toggle option for return.
+If False returns two vectors: (x, ee(x))
+Default = True</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Encircled energy diameter
+or
+2 vectors: diameters and encircled energies</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="turbulence.html" class="btn btn-neutral float-left" title="Atmospheric Turbulence" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="zernike.html" class="btn btn-neutral float-right" title="Circular Functions" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2019, The Authors.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

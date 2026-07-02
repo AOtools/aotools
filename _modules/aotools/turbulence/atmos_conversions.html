@@ -1,0 +1,344 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>aotools.turbulence.atmos_conversions &mdash; AOtools 0.1.dev477+g8f38ff7c1.d20260605 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=fa44fd50" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=867f5289"></script>
+      <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            AOtools
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../turbulence.html">Atmospheric Turbulence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../image_processing.html">Image Processing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../zernike.html">Circular Functions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../pupil.html">Telescope Pupils</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../wfs.html">Wavefront Sensors</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../opticalpropagation.html">Optical Propagation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../astronomy.html">Astronomical Functions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../fft.html">Normalised Fourier Transforms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../interpolation.html">Interpolation</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">AOtools</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">aotools.turbulence.atmos_conversions</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for aotools.turbulence.atmos_conversions</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Atmospheric Parameter Conversions</span>
+<span class="sd">---------------------------------</span>
+
+<span class="sd">Functions for converting between different atmospheric parameters,</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span>
+
+
+<div class="viewcode-block" id="cn2_to_seeing">
+<a class="viewcode-back" href="../../../turbulence.html#aotools.turbulence.atmos_conversions.cn2_to_seeing">[docs]</a>
+<span class="k">def</span> <span class="nf">cn2_to_seeing</span><span class="p">(</span><span class="n">cn2</span><span class="p">,</span> <span class="n">lamda</span><span class="o">=</span><span class="mf">500.E-9</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Calculates the seeing angle from the integrated Cn2 value</span>
+
+<span class="sd">    Parameters:</span>
+<span class="sd">        cn2 (float): integrated Cn2 value in m^2/3</span>
+<span class="sd">        lamda : wavelength</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        seeing angle in arcseconds</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">r0</span> <span class="o">=</span> <span class="n">cn2_to_r0</span><span class="p">(</span><span class="n">cn2</span><span class="p">,</span><span class="n">lamda</span><span class="p">)</span>
+    <span class="n">seeing</span> <span class="o">=</span> <span class="n">r0_to_seeing</span><span class="p">(</span><span class="n">r0</span><span class="p">,</span><span class="n">lamda</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">seeing</span></div>
+
+
+
+<div class="viewcode-block" id="seeing_to_cn2">
+<a class="viewcode-back" href="../../../turbulence.html#aotools.turbulence.atmos_conversions.seeing_to_cn2">[docs]</a>
+<span class="k">def</span> <span class="nf">seeing_to_cn2</span><span class="p">(</span><span class="n">seeing</span><span class="p">,</span> <span class="n">lamda</span><span class="o">=</span><span class="mf">500.E-9</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Calculates the integrated Cn2 value from the seeing</span>
+
+<span class="sd">    Parameters:</span>
+<span class="sd">        seeing (float): seeing in arcseconds</span>
+<span class="sd">        lamda : wavelength</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        integrated Cn2 value in m^2/3</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">r0</span> <span class="o">=</span> <span class="n">seeing_to_r0</span><span class="p">(</span><span class="n">seeing</span><span class="p">,</span><span class="n">lamda</span><span class="p">)</span>
+    <span class="n">cn2</span> <span class="o">=</span> <span class="n">r0_to_cn2</span><span class="p">(</span><span class="n">r0</span><span class="p">,</span><span class="n">lamda</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">cn2</span></div>
+
+
+
+<div class="viewcode-block" id="cn2_to_r0">
+<a class="viewcode-back" href="../../../turbulence.html#aotools.turbulence.atmos_conversions.cn2_to_r0">[docs]</a>
+<span class="k">def</span> <span class="nf">cn2_to_r0</span><span class="p">(</span><span class="n">cn2</span><span class="p">,</span> <span class="n">lamda</span><span class="o">=</span><span class="mf">500.E-9</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Calculates r0 from the integrated Cn2 value</span>
+
+<span class="sd">    Parameters:</span>
+<span class="sd">        cn2 (float): integrated Cn2 value in m^2/3</span>
+<span class="sd">        lamda : wavelength</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        r0 in m</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">r0</span><span class="o">=</span><span class="p">(</span><span class="mf">0.423</span><span class="o">*</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">numpy</span><span class="o">.</span><span class="n">pi</span><span class="o">/</span><span class="n">lamda</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span><span class="o">*</span><span class="n">cn2</span><span class="p">)</span><span class="o">**</span><span class="p">(</span><span class="o">-</span><span class="mf">3.</span><span class="o">/</span><span class="mf">5.</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">r0</span></div>
+
+
+
+<div class="viewcode-block" id="r0_to_cn2">
+<a class="viewcode-back" href="../../../turbulence.html#aotools.turbulence.atmos_conversions.r0_to_cn2">[docs]</a>
+<span class="k">def</span> <span class="nf">r0_to_cn2</span><span class="p">(</span><span class="n">r0</span><span class="p">,</span> <span class="n">lamda</span><span class="o">=</span><span class="mf">500.E-9</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Calculates integrated Cn2 value from r0</span>
+
+<span class="sd">    Parameters:</span>
+<span class="sd">        r0 (float): r0 in m</span>
+<span class="sd">        lamda : wavelength</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        cn2 (float): integrated Cn2 value in m^2/3</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">cn2</span> <span class="o">=</span> <span class="n">r0</span><span class="o">**</span><span class="p">(</span><span class="o">-</span><span class="mf">5.</span><span class="o">/</span><span class="mf">3.</span><span class="p">)</span><span class="o">/</span><span class="p">(</span><span class="mf">0.423</span><span class="o">*</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">numpy</span><span class="o">.</span><span class="n">pi</span><span class="o">/</span><span class="n">lamda</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">cn2</span></div>
+
+
+
+<div class="viewcode-block" id="r0_to_seeing">
+<a class="viewcode-back" href="../../../turbulence.html#aotools.turbulence.atmos_conversions.r0_to_seeing">[docs]</a>
+<span class="k">def</span> <span class="nf">r0_to_seeing</span><span class="p">(</span><span class="n">r0</span><span class="p">,</span> <span class="n">lamda</span><span class="o">=</span><span class="mf">500.E-9</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Calculates the seeing angle from r0</span>
+
+<span class="sd">    Parameters:</span>
+<span class="sd">        r0 (float): Freid&#39;s parameter in m</span>
+<span class="sd">        lamda : wavelength</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        seeing angle in arcseconds</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="p">(</span><span class="mf">0.98</span><span class="o">*</span><span class="n">lamda</span><span class="o">/</span><span class="n">r0</span><span class="p">)</span><span class="o">*</span><span class="mf">180.</span><span class="o">*</span><span class="mf">3600.</span><span class="o">/</span><span class="n">numpy</span><span class="o">.</span><span class="n">pi</span></div>
+
+
+
+<div class="viewcode-block" id="seeing_to_r0">
+<a class="viewcode-back" href="../../../turbulence.html#aotools.turbulence.atmos_conversions.seeing_to_r0">[docs]</a>
+<span class="k">def</span> <span class="nf">seeing_to_r0</span><span class="p">(</span><span class="n">seeing</span><span class="p">,</span> <span class="n">lamda</span><span class="o">=</span><span class="mf">500.E-9</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Calculates r0 from seeing</span>
+
+<span class="sd">    Parameters:</span>
+<span class="sd">        seeing (float): seeing angle in arcseconds</span>
+<span class="sd">        lamda : wavelength</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        r0 (float): Freid&#39;s parameter in cm</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="mf">0.98</span><span class="o">*</span><span class="n">lamda</span><span class="o">/</span><span class="p">(</span><span class="n">seeing</span><span class="o">*</span><span class="n">numpy</span><span class="o">.</span><span class="n">pi</span><span class="o">/</span><span class="p">(</span><span class="mf">180.</span><span class="o">*</span><span class="mf">3600.</span><span class="p">))</span></div>
+
+
+
+<div class="viewcode-block" id="coherenceTime">
+<a class="viewcode-back" href="../../../turbulence.html#aotools.turbulence.atmos_conversions.coherenceTime">[docs]</a>
+<span class="k">def</span> <span class="nf">coherenceTime</span><span class="p">(</span><span class="n">cn2</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="n">lamda</span><span class="o">=</span><span class="mf">500.E-9</span><span class="p">,</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Calculates the coherence time from profiles of the Cn2 and wind velocity</span>
+
+<span class="sd">    Parameters:</span>
+<span class="sd">        cn2 (array): Cn2 profile in m^2/3. &gt;1D arrays are supported (i.e. multiple</span>
+<span class="sd">            profiles), in which case the default assumption is that the turbulent </span>
+<span class="sd">            layers are along the final (-1) axis. </span>
+<span class="sd">        v (array): profile of wind velocity, same altitude scale as cn2 </span>
+<span class="sd">        lamda : wavelength</span>
+<span class="sd">        axis (int, optional): axis over which to integrate (for &gt;1D inputs)</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        coherence time in seconds</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">Jv</span> <span class="o">=</span> <span class="p">(</span><span class="n">cn2</span><span class="o">*</span><span class="p">(</span><span class="n">v</span><span class="o">**</span><span class="p">(</span><span class="mf">5.</span><span class="o">/</span><span class="mf">3.</span><span class="p">)))</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="p">)</span>
+    <span class="n">tau0</span> <span class="o">=</span> <span class="p">(</span><span class="n">Jv</span><span class="o">**</span><span class="p">(</span><span class="o">-</span><span class="mf">3.</span><span class="o">/</span><span class="mf">5.</span><span class="p">))</span><span class="o">*</span><span class="mf">0.0581</span><span class="o">*</span><span class="n">lamda</span><span class="o">**</span><span class="p">(</span><span class="mf">6.</span><span class="o">/</span><span class="mf">5.</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">tau0</span></div>
+
+
+
+<div class="viewcode-block" id="isoplanaticAngle">
+<a class="viewcode-back" href="../../../turbulence.html#aotools.turbulence.atmos_conversions.isoplanaticAngle">[docs]</a>
+<span class="k">def</span> <span class="nf">isoplanaticAngle</span><span class="p">(</span><span class="n">cn2</span><span class="p">,</span> <span class="n">h</span><span class="p">,</span> <span class="n">lamda</span><span class="o">=</span><span class="mf">500.E-9</span><span class="p">,</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Calculates the isoplanatic angle from the Cn2 profile</span>
+
+<span class="sd">    Parameters:</span>
+<span class="sd">        cn2 (array): Cn2 profile in m^2/3.  &gt;1D arrays are supported (i.e. multiple</span>
+<span class="sd">            profiles), in which case the default assumption is that the turbulent </span>
+<span class="sd">            layers are along the final (-1) axis. </span>
+<span class="sd">        h (Array): Altitude levels of cn2 profile in m</span>
+<span class="sd">        lamda : wavelength</span>
+<span class="sd">        axis (int, optional): axis over which to integrate (for &gt;1D inputs)</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        isoplanatic angle in arcseconds</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">Jh</span> <span class="o">=</span> <span class="p">(</span><span class="n">cn2</span><span class="o">*</span><span class="p">(</span><span class="n">h</span><span class="o">**</span><span class="p">(</span><span class="mf">5.</span><span class="o">/</span><span class="mf">3.</span><span class="p">)))</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="p">)</span>
+    <span class="n">iso</span> <span class="o">=</span> <span class="mf">0.0581</span><span class="o">*</span><span class="n">lamda</span><span class="o">**</span><span class="p">(</span><span class="mf">6.</span><span class="o">/</span><span class="mf">5.</span><span class="p">)</span><span class="o">*</span><span class="n">Jh</span><span class="o">**</span><span class="p">(</span><span class="o">-</span><span class="mf">3.</span><span class="o">/</span><span class="mf">5.</span><span class="p">)</span><span class="o">*</span><span class="mf">180.</span><span class="o">*</span><span class="mf">3600.</span><span class="o">/</span><span class="n">numpy</span><span class="o">.</span><span class="n">pi</span>
+    <span class="k">return</span> <span class="n">iso</span></div>
+
+
+
+<div class="viewcode-block" id="rytov_variance">
+<a class="viewcode-back" href="../../../turbulence.html#aotools.turbulence.atmos_conversions.rytov_variance">[docs]</a>
+<span class="k">def</span> <span class="nf">rytov_variance</span><span class="p">(</span><span class="n">cn2</span><span class="p">,</span> <span class="n">h</span><span class="p">,</span> <span class="n">lamda</span><span class="o">=</span><span class="mf">500.E-9</span><span class="p">,</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Calculates plane wave Rytov variance from the Cn2 profile</span>
+
+<span class="sd">    Parameters:</span>
+<span class="sd">        cn2 (numpy.ndarray): Cn2 profile in m^2/3.  &gt;1D arrays are supported (i.e. multiple</span>
+<span class="sd">            profiles), in which case the default assumption is that the turbulent </span>
+<span class="sd">            layers are along the final (-1) axis. </span>
+<span class="sd">        h (numpy.ndarray): Altitude levels of cn2 profile in m</span>
+<span class="sd">        lamda (float, optional): wavelength, default 500 nm</span>
+<span class="sd">        axis (int, optional): axis over which to integrate (for &gt;1D inputs)</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        Rytov variance (float)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">k</span> <span class="o">=</span> <span class="mf">2.</span> <span class="o">*</span> <span class="n">numpy</span><span class="o">.</span><span class="n">pi</span> <span class="o">/</span> <span class="n">lamda</span>
+    <span class="k">return</span> <span class="mf">2.25</span> <span class="o">*</span> <span class="n">k</span><span class="o">**</span><span class="p">(</span><span class="mf">7.</span><span class="o">/</span><span class="mf">6.</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">cn2</span><span class="o">*</span><span class="n">h</span><span class="o">**</span><span class="p">(</span><span class="mf">5.</span><span class="o">/</span><span class="mf">6.</span><span class="p">))</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="r0_from_slopes">
+<a class="viewcode-back" href="../../../turbulence.html#aotools.turbulence.atmos_conversions.r0_from_slopes">[docs]</a>
+<span class="k">def</span> <span class="nf">r0_from_slopes</span><span class="p">(</span><span class="n">slopes</span><span class="p">,</span> <span class="n">wavelength</span><span class="p">,</span> <span class="n">subapDiam</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Measures the value of R0 from a set of WFS slopes.</span>
+
+<span class="sd">    Uses the equation in Saint Jaques, 1998, PhD Thesis, Appendix A to calculate the value of atmospheric seeing parameter, r0, that would result in the variance of the given slopes.</span>
+
+<span class="sd">    Parameters:</span>
+<span class="sd">        slopes (ndarray): A 3-d set of slopes in radians, of shape (dimension, nSubaps, nFrames)</span>
+<span class="sd">        wavelength (float): The wavelegnth of the light observed</span>
+<span class="sd">        subapDiam (float) The diameter of each sub-aperture</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        float: An estimate of r0 for that dataset.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">slopeVar</span> <span class="o">=</span> <span class="n">slopes</span><span class="o">.</span><span class="n">var</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">))</span>
+
+    <span class="n">r0</span> <span class="o">=</span> <span class="p">((</span><span class="mf">0.162</span> <span class="o">*</span> <span class="p">(</span><span class="n">wavelength</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span> <span class="o">*</span> <span class="n">subapDiam</span> <span class="o">**</span> <span class="p">(</span><span class="o">-</span><span class="mf">1.</span> <span class="o">/</span> <span class="mi">3</span><span class="p">))</span> <span class="o">/</span> <span class="n">slopeVar</span><span class="p">)</span> <span class="o">**</span> <span class="p">(</span><span class="mf">3.</span> <span class="o">/</span> <span class="mi">5</span><span class="p">)</span>
+
+    <span class="n">r0</span> <span class="o">=</span> <span class="n">r0</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+
+    <span class="k">return</span> <span class="n">r0</span></div>
+
+
+
+<div class="viewcode-block" id="slope_variance_from_r0">
+<a class="viewcode-back" href="../../../turbulence.html#aotools.turbulence.atmos_conversions.slope_variance_from_r0">[docs]</a>
+<span class="k">def</span> <span class="nf">slope_variance_from_r0</span><span class="p">(</span><span class="n">r0</span><span class="p">,</span> <span class="n">wavelength</span><span class="p">,</span> <span class="n">subapDiam</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Uses the equation in Saint Jaques, 1998, PhD Thesis, Appendix A to calculate the slope variance resulting from a</span>
+<span class="sd">    value of r0.</span>
+
+<span class="sd">    Parameters:</span>
+<span class="sd">        r0 (float): Fried papamerter of turubulence in metres</span>
+<span class="sd">        wavelength (float): Wavelength of light in metres (where 1e-9 is 1nm)</span>
+<span class="sd">        subapDiam (float): Diameter of the aperture in metres</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        The expected slope variance for a given r0 ValueError</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">slope_var</span> <span class="o">=</span> <span class="mf">0.162</span> <span class="o">*</span> <span class="p">(</span><span class="n">wavelength</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span> <span class="o">*</span> <span class="n">r0</span> <span class="o">**</span> <span class="p">(</span><span class="o">-</span><span class="mf">5.</span> <span class="o">/</span> <span class="mi">3</span><span class="p">)</span> <span class="o">*</span> <span class="n">subapDiam</span> <span class="o">**</span> <span class="p">(</span><span class="o">-</span><span class="mf">1.</span> <span class="o">/</span> <span class="mi">3</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">slope_var</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2019, The Authors.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

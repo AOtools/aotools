@@ -1,0 +1,646 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>aotools.turbulence.slopecovariance &mdash; AOtools 0.1.dev477+g8f38ff7c1.d20260605 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=fa44fd50" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=867f5289"></script>
+      <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            AOtools
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../turbulence.html">Atmospheric Turbulence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../image_processing.html">Image Processing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../zernike.html">Circular Functions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../pupil.html">Telescope Pupils</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../wfs.html">Wavefront Sensors</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../opticalpropagation.html">Optical Propagation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../astronomy.html">Astronomical Functions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../fft.html">Normalised Fourier Transforms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../interpolation.html">Interpolation</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">AOtools</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">aotools.turbulence.slopecovariance</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for aotools.turbulence.slopecovariance</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Slope Covariance Matrix Generation</span>
+<span class="sd">----------------------------------</span>
+
+<span class="sd">Slope covariance matrix routines for AO systems observing through Von Karmon turbulence. Such matrices have a variety</span>
+<span class="sd">of uses, though they are especially useful for creating &#39;tomographic reconstructors&#39; that can reconstruct some &#39;psuedo&#39;</span>
+<span class="sd">WFS measurements in a required direction (where there might be an interesting science target but no guide stars),</span>
+<span class="sd">given some actual measurements in other directions (where the some suitable guide stars are).</span>
+
+<span class="sd">.. warning::</span>
+<span class="sd">    This code has been tested qualitatively and seems OK, but needs more rigorous testing.</span>
+
+<span class="sd">.. codeauthor::</span>
+<span class="sd">    Andrew Reeves &lt;a.p.reeves@durham.ac.uk&gt;</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">multiprocessing</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span>
+<span class="kn">import</span> <span class="nn">scipy.special</span>
+
+
+<div class="viewcode-block" id="CovarianceMatrix">
+<a class="viewcode-back" href="../../../turbulence.html#aotools.turbulence.slopecovariance.CovarianceMatrix">[docs]</a>
+<span class="k">class</span> <span class="nc">CovarianceMatrix</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A creator of slope covariance matrices in Von Karmon turbulence, based on the paper by Martin et al, SPIE, 2012.</span>
+
+<span class="sd">    Given a list of paramters describing an AO WFS system and the atmosphere above the telescope, this class can</span>
+<span class="sd">    compute the covariance matrix between all the WFS measurements. This can support LGS sources that exist at a</span>
+<span class="sd">    finite altitude. When computing the covariance matrix, Python&#39;s multiprocessing module is used to spread the work</span>
+<span class="sd">    between different processes and processing cores.</span>
+
+<span class="sd">    On initialisation, this class performs some initial calculations and parameter sorting. To create the</span>
+<span class="sd">    covariance matrix run the ``make_covariace_matrix`` method. This may take some time depending on your paramters...</span>
+
+<span class="sd">    Parameters:</span>
+<span class="sd">        n_wfs (int): Number of wavefront sensors present.</span>
+<span class="sd">        pupil_masks (ndarray): A map of the pupil for each WFS which is nx_subaps by ny_subaps. 1 if subap active, 0 if not.</span>
+<span class="sd">        telescope_diameter (float): Diameter of the telescope</span>
+<span class="sd">        subap_diameters (ndarray): The diameter of the sub-apertures for each WFS in metres</span>
+<span class="sd">        gs_altitudes (ndarray): Reciprocal (1/metres) of the Guide star alitude for each WFS</span>
+<span class="sd">        gs_positions (ndarray): X,Y position of each WFS in arcsecs. Array shape (Wfs, 2)</span>
+<span class="sd">        wfs_wavelengths (ndarray): Wavelength each WFS observes</span>
+<span class="sd">        n_layers (int): The number of atmospheric turbulence layers</span>
+<span class="sd">        layer_altitudes (ndarray): The altitude of each turbulence layer in meters</span>
+<span class="sd">        layer_r0s (ndarray): The Fried parameter of each turbulence layer</span>
+<span class="sd">        layer_L0s (ndarray): The outer-scale of each layer in metres</span>
+<span class="sd">        threads (int, optional): Number of processes to use for calculation. default is 1</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">n_wfs</span><span class="p">,</span> <span class="n">pupil_masks</span><span class="p">,</span> <span class="n">telescope_diameter</span><span class="p">,</span> <span class="n">subap_diameters</span><span class="p">,</span> <span class="n">gs_altitudes</span><span class="p">,</span> <span class="n">gs_positions</span><span class="p">,</span> <span class="n">wfs_wavelengths</span><span class="p">,</span>
+        <span class="n">n_layers</span><span class="p">,</span> <span class="n">layer_altitudes</span><span class="p">,</span> <span class="n">layer_r0s</span><span class="p">,</span> <span class="n">layer_L0s</span><span class="p">,</span> <span class="n">threads</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
+
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">threads</span> <span class="o">=</span> <span class="n">threads</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">n_wfs</span> <span class="o">=</span> <span class="n">n_wfs</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">subap_diameters</span> <span class="o">=</span> <span class="n">subap_diameters</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">wfs_wavelengths</span> <span class="o">=</span> <span class="n">wfs_wavelengths</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">telescope_diameter</span> <span class="o">=</span> <span class="n">telescope_diameter</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pupil_masks</span> <span class="o">=</span> <span class="n">pupil_masks</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">gs_altitudes</span> <span class="o">=</span> <span class="n">gs_altitudes</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">gs_positions</span> <span class="o">=</span> <span class="n">gs_positions</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">n_layers</span> <span class="o">=</span> <span class="n">n_layers</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">layer_altitudes</span> <span class="o">=</span> <span class="n">layer_altitudes</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">layer_r0s</span> <span class="o">=</span> <span class="n">layer_r0s</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">layer_L0s</span> <span class="o">=</span> <span class="n">layer_L0s</span>
+        <span class="c1"># print(&quot;n_layers: {}&quot;.format(n_layers))</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">n_subaps</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">total_subaps</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">for</span> <span class="n">wfs_n</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_wfs</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">n_subaps</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">pupil_masks</span><span class="p">[</span><span class="n">wfs_n</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">())</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">total_subaps</span> <span class="o">+=</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_subaps</span><span class="p">[</span><span class="n">wfs_n</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">n_subaps</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_subaps</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="s2">&quot;int&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">total_subaps</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">total_subaps</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="CovarianceMatrix.make_covariance_matrix">
+<a class="viewcode-back" href="../../../turbulence.html#aotools.turbulence.slopecovariance.CovarianceMatrix.make_covariance_matrix">[docs]</a>
+    <span class="k">def</span> <span class="nf">make_covariance_matrix</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Calculate and build the covariance matrix</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            ndarray: Covariance Matrix</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># make a list of the positions of the centre of every sub-aperture</span>
+        <span class="c1"># for each WFS un units of metres from the centre of the pupil</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">subap_positions</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">wfs_n</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_wfs</span><span class="p">):</span>
+            <span class="n">wfs_subap_pos</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">numpy</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">pupil_masks</span><span class="p">[</span><span class="n">wfs_n</span><span class="p">]</span> <span class="o">==</span> <span class="mi">1</span><span class="p">))</span><span class="o">.</span><span class="n">T</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">subap_diameters</span><span class="p">[</span><span class="n">wfs_n</span><span class="p">]</span>
+            <span class="n">wfs_subap_pos</span> <span class="o">-=</span> <span class="bp">self</span><span class="o">.</span><span class="n">telescope_diameter</span><span class="o">/</span><span class="mf">2.</span>
+            <span class="n">wfs_subap_pos</span> <span class="o">-=</span> <span class="bp">self</span><span class="o">.</span><span class="n">subap_diameters</span><span class="p">[</span><span class="n">wfs_n</span><span class="p">]</span><span class="o">/</span><span class="mf">2.</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">subap_positions</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">wfs_subap_pos</span><span class="p">)</span>
+            <span class="c1"># print(&quot;WFS {}, max position: {}m&quot;.format(wfs_n, abs(wfs_subap_pos).max()))</span>
+
+        <span class="c1"># Create a list with n_layers elements, each of which is a list of the WFS meta-subap positions at that altitude</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">subap_layer_positions</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">subap_layer_diameters</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">layer_n</span><span class="p">,</span> <span class="n">layer_altitude</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">layer_altitudes</span><span class="p">):</span>
+            <span class="n">subap_n</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="n">wfs_pos</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="n">wfs_subap_diameters</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">for</span> <span class="n">wfs_n</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_wfs</span><span class="p">):</span>
+
+                <span class="c1"># Scale for LGS</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">gs_altitudes</span><span class="p">[</span><span class="n">wfs_n</span><span class="p">]</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="c1"># print(&quot;Its an LGS!&quot;)</span>
+                    <span class="n">scale_factor</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">layer_altitude</span><span class="o">/</span><span class="bp">self</span><span class="o">.</span><span class="n">gs_altitudes</span><span class="p">[</span><span class="n">wfs_n</span><span class="p">])</span>
+                    <span class="n">positions</span> <span class="o">=</span> <span class="n">scale_factor</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">subap_positions</span><span class="p">[</span><span class="n">wfs_n</span><span class="p">]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">scale_factor</span> <span class="o">=</span> <span class="mi">1</span>
+                    <span class="n">positions</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">subap_positions</span><span class="p">[</span><span class="n">wfs_n</span><span class="p">]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+
+                <span class="c1"># translate due to GS position</span>
+                <span class="n">gs_pos_rad</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">gs_positions</span><span class="p">[</span><span class="n">wfs_n</span><span class="p">])</span> <span class="o">*</span> <span class="n">numpy</span><span class="o">.</span><span class="n">pi</span><span class="o">/</span><span class="mi">180</span><span class="o">/</span><span class="mi">3600</span>
+                <span class="c1"># print(&quot;GS Positions: {} rad&quot;.format(gs_pos_rad))</span>
+                <span class="n">translation</span> <span class="o">=</span> <span class="n">gs_pos_rad</span> <span class="o">*</span> <span class="n">layer_altitude</span>
+
+                <span class="c1"># print(&quot;Translation: {} m&quot;.format(translation))</span>
+                <span class="c1"># print(&quot;Max position before translation: {} m&quot;.format(abs(positions).max()))</span>
+
+                <span class="n">positions</span> <span class="o">+=</span> <span class="n">translation</span>
+                <span class="c1"># print(&quot;Max position: {} m&quot;.format(abs(positions).max()))</span>
+
+
+                <span class="n">wfs_pos</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">positions</span><span class="p">)</span>
+                <span class="n">wfs_subap_diameters</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">subap_diameters</span><span class="p">[</span><span class="n">wfs_n</span><span class="p">]</span> <span class="o">*</span> <span class="n">scale_factor</span><span class="p">)</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">subap_layer_diameters</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">wfs_subap_diameters</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">subap_layer_positions</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">wfs_pos</span><span class="p">)</span>
+
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">threads</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_make_covariance_matrix</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">_make_covariance_matrix_mp</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">threads</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">covariance_matrix</span> <span class="o">=</span> <span class="n">mirror_covariance_matrix</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">covariance_matrix</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">covariance_matrix</span></div>
+
+
+    <span class="k">def</span> <span class="nf">_make_covariance_matrix</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c1"># Now compile the covariance matrix</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">covariance_matrix</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">2</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">total_subaps</span><span class="p">,</span> <span class="mi">2</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">total_subaps</span><span class="p">))</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="s2">&quot;float32&quot;</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">layer_n</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_layers</span><span class="p">):</span>
+            <span class="c1"># print(&quot;Compute Layer {}&quot;.format(layer_n))</span>
+
+            <span class="n">subap_ni</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="k">for</span> <span class="n">wfs_i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_wfs</span><span class="p">):</span>
+                <span class="n">subap_nj</span> <span class="o">=</span> <span class="mi">0</span>
+                <span class="c1"># Only loop over upper diagonal of covariance matrix as its symmetrical</span>
+                <span class="k">for</span> <span class="n">wfs_j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">wfs_i</span><span class="o">+</span><span class="mi">1</span><span class="p">):</span>
+                    <span class="n">cov_xx</span><span class="p">,</span> <span class="n">cov_yy</span><span class="p">,</span> <span class="n">cov_xy</span> <span class="o">=</span> <span class="n">wfs_covariance</span><span class="p">(</span>
+                            <span class="bp">self</span><span class="o">.</span><span class="n">n_subaps</span><span class="p">[</span><span class="n">wfs_i</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_subaps</span><span class="p">[</span><span class="n">wfs_j</span><span class="p">],</span>
+                            <span class="bp">self</span><span class="o">.</span><span class="n">subap_layer_positions</span><span class="p">[</span><span class="n">layer_n</span><span class="p">][</span><span class="n">wfs_i</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">subap_layer_positions</span><span class="p">[</span><span class="n">layer_n</span><span class="p">][</span><span class="n">wfs_j</span><span class="p">],</span>
+                            <span class="bp">self</span><span class="o">.</span><span class="n">subap_layer_diameters</span><span class="p">[</span><span class="n">layer_n</span><span class="p">][</span><span class="n">wfs_i</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">subap_layer_diameters</span><span class="p">[</span><span class="n">layer_n</span><span class="p">][</span><span class="n">wfs_j</span><span class="p">],</span>
+                            <span class="bp">self</span><span class="o">.</span><span class="n">layer_r0s</span><span class="p">[</span><span class="n">layer_n</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">layer_L0s</span><span class="p">[</span><span class="n">layer_n</span><span class="p">])</span>
+
+                    <span class="n">subap_ni</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_subaps</span><span class="p">[:</span><span class="n">wfs_i</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+                    <span class="n">subap_nj</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_subaps</span><span class="p">[:</span><span class="n">wfs_j</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+
+                    <span class="c1"># Coordinates of the XX covariance</span>
+                    <span class="n">cov_mat_coord_x1</span> <span class="o">=</span> <span class="n">subap_ni</span> <span class="o">*</span> <span class="mi">2</span>
+                    <span class="n">cov_mat_coord_x2</span> <span class="o">=</span> <span class="n">subap_ni</span> <span class="o">*</span> <span class="mi">2</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_subaps</span><span class="p">[</span><span class="n">wfs_i</span><span class="p">]</span>
+
+                    <span class="n">cov_mat_coord_y1</span> <span class="o">=</span> <span class="n">subap_nj</span> <span class="o">*</span> <span class="mi">2</span>
+                    <span class="n">cov_mat_coord_y2</span> <span class="o">=</span> <span class="n">subap_nj</span> <span class="o">*</span> <span class="mi">2</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_subaps</span><span class="p">[</span><span class="n">wfs_j</span><span class="p">]</span>
+
+                    <span class="c1"># print(&quot;covmat coords: ({}: {}, {}: {})&quot;.format(cov_mat_coord_x1, cov_mat_coord_x2, cov_mat_coord_y1, cov_mat_coord_y2))</span>
+                    <span class="n">r0_scale</span> <span class="o">=</span> <span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">wfs_wavelengths</span><span class="p">[</span><span class="n">wfs_i</span><span class="p">]</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">wfs_wavelengths</span><span class="p">[</span><span class="n">wfs_j</span><span class="p">])</span>
+                            <span class="o">/</span> <span class="p">(</span><span class="mi">8</span> <span class="o">*</span> <span class="n">numpy</span><span class="o">.</span><span class="n">pi</span><span class="o">**</span><span class="mi">2</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">subap_layer_diameters</span><span class="p">[</span><span class="n">layer_n</span><span class="p">][</span><span class="n">wfs_i</span><span class="p">]</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">subap_layer_diameters</span><span class="p">[</span><span class="n">layer_n</span><span class="p">][</span><span class="n">wfs_j</span><span class="p">])</span>
+                                <span class="p">)</span>
+
+                    <span class="bp">self</span><span class="o">.</span><span class="n">covariance_matrix</span><span class="p">[</span>
+                            <span class="n">cov_mat_coord_x1</span><span class="p">:</span> <span class="n">cov_mat_coord_x2</span><span class="p">,</span> <span class="n">cov_mat_coord_y1</span><span class="p">:</span> <span class="n">cov_mat_coord_y2</span>
+                            <span class="p">]</span> <span class="o">+=</span> <span class="n">cov_xx</span> <span class="o">*</span> <span class="n">r0_scale</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">covariance_matrix</span><span class="p">[</span>
+                            <span class="n">cov_mat_coord_x1</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_subaps</span><span class="p">[</span><span class="n">wfs_i</span><span class="p">]:</span> <span class="n">cov_mat_coord_x2</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_subaps</span><span class="p">[</span><span class="n">wfs_i</span><span class="p">],</span>
+                            <span class="n">cov_mat_coord_y1</span><span class="p">:</span> <span class="n">cov_mat_coord_y2</span><span class="p">]</span> <span class="o">+=</span> <span class="n">cov_xy</span> <span class="o">*</span> <span class="n">r0_scale</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">covariance_matrix</span><span class="p">[</span>
+                            <span class="n">cov_mat_coord_x1</span><span class="p">:</span> <span class="n">cov_mat_coord_x2</span><span class="p">,</span>
+                            <span class="n">cov_mat_coord_y1</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_subaps</span><span class="p">[</span><span class="n">wfs_j</span><span class="p">]:</span> <span class="n">cov_mat_coord_y2</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_subaps</span><span class="p">[</span><span class="n">wfs_j</span><span class="p">]</span>
+                            <span class="p">]</span> <span class="o">+=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">fliplr</span><span class="p">(</span><span class="n">numpy</span><span class="o">.</span><span class="n">flipud</span><span class="p">(</span><span class="n">cov_xy</span><span class="p">))</span> <span class="o">*</span> <span class="n">r0_scale</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">covariance_matrix</span><span class="p">[</span>
+                            <span class="n">cov_mat_coord_x1</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_subaps</span><span class="p">[</span><span class="n">wfs_i</span><span class="p">]:</span> <span class="n">cov_mat_coord_x2</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_subaps</span><span class="p">[</span><span class="n">wfs_i</span><span class="p">],</span>
+                            <span class="n">cov_mat_coord_y1</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_subaps</span><span class="p">[</span><span class="n">wfs_j</span><span class="p">]:</span> <span class="n">cov_mat_coord_y2</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_subaps</span><span class="p">[</span><span class="n">wfs_j</span><span class="p">]</span>
+                            <span class="p">]</span> <span class="o">+=</span> <span class="n">cov_yy</span> <span class="o">*</span> <span class="n">r0_scale</span>
+
+    <span class="k">def</span> <span class="nf">_make_covariance_matrix_mp</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">threads</span><span class="p">):</span>
+        <span class="n">pool</span> <span class="o">=</span> <span class="n">multiprocessing</span><span class="o">.</span><span class="n">Pool</span><span class="p">(</span><span class="n">threads</span><span class="p">)</span>
+
+        <span class="c1"># Now compile the covariance matrix</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">covariance_matrix</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">2</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">total_subaps</span><span class="p">,</span> <span class="mi">2</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">total_subaps</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="s2">&quot;float32&quot;</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">layer_n</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_layers</span><span class="p">):</span>
+            <span class="c1"># print(&quot;Compute Layer {}&quot;.format(layer_n))</span>
+
+            <span class="n">args</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">for</span> <span class="n">wfs_i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_wfs</span><span class="p">):</span>
+                <span class="c1"># Only loop over upper diagonal of covariance matrix as its symmetrical</span>
+                <span class="k">for</span> <span class="n">wfs_j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">wfs_i</span><span class="o">+</span><span class="mi">1</span><span class="p">):</span>
+                    <span class="n">args</span><span class="o">.</span><span class="n">append</span><span class="p">((</span>
+                            <span class="bp">self</span><span class="o">.</span><span class="n">n_subaps</span><span class="p">[</span><span class="n">wfs_i</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_subaps</span><span class="p">[</span><span class="n">wfs_j</span><span class="p">],</span>
+                            <span class="bp">self</span><span class="o">.</span><span class="n">subap_layer_positions</span><span class="p">[</span><span class="n">layer_n</span><span class="p">][</span><span class="n">wfs_i</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">subap_layer_positions</span><span class="p">[</span><span class="n">layer_n</span><span class="p">][</span><span class="n">wfs_j</span><span class="p">],</span>
+                            <span class="bp">self</span><span class="o">.</span><span class="n">subap_layer_diameters</span><span class="p">[</span><span class="n">layer_n</span><span class="p">][</span><span class="n">wfs_i</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">subap_layer_diameters</span><span class="p">[</span><span class="n">layer_n</span><span class="p">][</span><span class="n">wfs_j</span><span class="p">],</span>
+                            <span class="bp">self</span><span class="o">.</span><span class="n">layer_r0s</span><span class="p">[</span><span class="n">layer_n</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">layer_L0s</span><span class="p">[</span><span class="n">layer_n</span><span class="p">]))</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">cov_mats</span> <span class="o">=</span> <span class="n">pool</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="n">wfs_covariance_mpwrap</span><span class="p">,</span> <span class="n">args</span><span class="p">)</span>
+
+            <span class="n">thread_n</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="k">for</span> <span class="n">wfs_i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_wfs</span><span class="p">):</span>
+                <span class="k">for</span> <span class="n">wfs_j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">wfs_i</span><span class="o">+</span><span class="mi">1</span><span class="p">):</span>
+                    <span class="n">cov_xx</span><span class="p">,</span> <span class="n">cov_yy</span><span class="p">,</span> <span class="n">cov_xy</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cov_mats</span><span class="p">[</span><span class="n">thread_n</span><span class="p">]</span>
+
+                    <span class="n">subap_ni</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_subaps</span><span class="p">[:</span><span class="n">wfs_i</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+                    <span class="n">subap_nj</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_subaps</span><span class="p">[:</span><span class="n">wfs_j</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+
+                    <span class="c1"># Coordinates of the XX covariance</span>
+                    <span class="n">cov_mat_coord_x1</span> <span class="o">=</span> <span class="n">subap_ni</span> <span class="o">*</span> <span class="mi">2</span>
+                    <span class="n">cov_mat_coord_x2</span> <span class="o">=</span> <span class="n">subap_ni</span> <span class="o">*</span> <span class="mi">2</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_subaps</span><span class="p">[</span><span class="n">wfs_i</span><span class="p">]</span>
+
+                    <span class="n">cov_mat_coord_y1</span> <span class="o">=</span> <span class="n">subap_nj</span> <span class="o">*</span> <span class="mi">2</span>
+                    <span class="n">cov_mat_coord_y2</span> <span class="o">=</span> <span class="n">subap_nj</span> <span class="o">*</span> <span class="mi">2</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_subaps</span><span class="p">[</span><span class="n">wfs_j</span><span class="p">]</span>
+
+                    <span class="c1"># print(&quot;covmat coords: ({}: {}, {}: {})&quot;.format(cov_mat_coord_x1, cov_mat_coord_x2, cov_mat_coord_y1, cov_mat_coord_y2))</span>
+                    <span class="n">r0_scale</span> <span class="o">=</span> <span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">wfs_wavelengths</span><span class="p">[</span><span class="n">wfs_i</span><span class="p">]</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">wfs_wavelengths</span><span class="p">[</span><span class="n">wfs_j</span><span class="p">])</span>
+                            <span class="o">/</span> <span class="p">(</span><span class="mi">8</span> <span class="o">*</span> <span class="n">numpy</span><span class="o">.</span><span class="n">pi</span><span class="o">**</span><span class="mi">2</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">subap_layer_diameters</span><span class="p">[</span><span class="n">layer_n</span><span class="p">][</span><span class="n">wfs_i</span><span class="p">]</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">subap_layer_diameters</span><span class="p">[</span><span class="n">layer_n</span><span class="p">][</span><span class="n">wfs_j</span><span class="p">])</span>
+                                <span class="p">)</span>
+
+                    <span class="bp">self</span><span class="o">.</span><span class="n">covariance_matrix</span><span class="p">[</span>
+                            <span class="n">cov_mat_coord_x1</span><span class="p">:</span> <span class="n">cov_mat_coord_x2</span><span class="p">,</span> <span class="n">cov_mat_coord_y1</span><span class="p">:</span> <span class="n">cov_mat_coord_y2</span>
+                            <span class="p">]</span> <span class="o">+=</span> <span class="n">cov_xx</span> <span class="o">*</span> <span class="n">r0_scale</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">covariance_matrix</span><span class="p">[</span>
+                            <span class="n">cov_mat_coord_x1</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_subaps</span><span class="p">[</span><span class="n">wfs_i</span><span class="p">]:</span> <span class="n">cov_mat_coord_x2</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_subaps</span><span class="p">[</span><span class="n">wfs_i</span><span class="p">],</span>
+                            <span class="n">cov_mat_coord_y1</span><span class="p">:</span> <span class="n">cov_mat_coord_y2</span><span class="p">]</span> <span class="o">+=</span> <span class="n">cov_xy</span> <span class="o">*</span> <span class="n">r0_scale</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">covariance_matrix</span><span class="p">[</span>
+                            <span class="n">cov_mat_coord_x1</span><span class="p">:</span> <span class="n">cov_mat_coord_x2</span><span class="p">,</span>
+                            <span class="n">cov_mat_coord_y1</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_subaps</span><span class="p">[</span><span class="n">wfs_j</span><span class="p">]:</span> <span class="n">cov_mat_coord_y2</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_subaps</span><span class="p">[</span><span class="n">wfs_j</span><span class="p">]</span>
+                            <span class="p">]</span> <span class="o">+=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">fliplr</span><span class="p">(</span><span class="n">numpy</span><span class="o">.</span><span class="n">flipud</span><span class="p">(</span><span class="n">cov_xy</span><span class="p">))</span> <span class="o">*</span> <span class="n">r0_scale</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">covariance_matrix</span><span class="p">[</span>
+                            <span class="n">cov_mat_coord_x1</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_subaps</span><span class="p">[</span><span class="n">wfs_i</span><span class="p">]:</span> <span class="n">cov_mat_coord_x2</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_subaps</span><span class="p">[</span><span class="n">wfs_i</span><span class="p">],</span>
+                            <span class="n">cov_mat_coord_y1</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_subaps</span><span class="p">[</span><span class="n">wfs_j</span><span class="p">]:</span> <span class="n">cov_mat_coord_y2</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_subaps</span><span class="p">[</span><span class="n">wfs_j</span><span class="p">]</span>
+                            <span class="p">]</span> <span class="o">+=</span> <span class="n">cov_yy</span> <span class="o">*</span> <span class="n">r0_scale</span>
+
+                    <span class="n">thread_n</span> <span class="o">+=</span> <span class="mi">1</span>
+
+
+<div class="viewcode-block" id="CovarianceMatrix.make_tomographic_reconstructor">
+<a class="viewcode-back" href="../../../turbulence.html#aotools.turbulence.slopecovariance.CovarianceMatrix.make_tomographic_reconstructor">[docs]</a>
+    <span class="k">def</span> <span class="nf">make_tomographic_reconstructor</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">svd_conditioning</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Creats a tomohraphic reconstructor from the covariance matrix as in Vidal, 2010.</span>
+<span class="sd">        See the documentation for the function `create_tomographic_covariance_reconstructor` in this module.</span>
+<span class="sd">        Assumes the 1st WFS given is the one for which reconstruction is required to.</span>
+
+<span class="sd">        Parameters:</span>
+<span class="sd">            svd_conditioning (float): Conditioning for the SVD used in inversion.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            ndarray: A tomohraphic reconstructor.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">tomographic_reconstructor</span> <span class="o">=</span> <span class="n">create_tomographic_covariance_reconstructor</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">covariance_matrix</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_subaps</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">svd_conditioning</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">tomographic_reconstructor</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="wfs_covariance_mpwrap">
+<a class="viewcode-back" href="../../../turbulence.html#aotools.turbulence.slopecovariance.wfs_covariance_mpwrap">[docs]</a>
+<span class="k">def</span> <span class="nf">wfs_covariance_mpwrap</span><span class="p">(</span><span class="n">args</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">wfs_covariance</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="wfs_covariance">
+<a class="viewcode-back" href="../../../turbulence.html#aotools.turbulence.slopecovariance.wfs_covariance">[docs]</a>
+<span class="k">def</span> <span class="nf">wfs_covariance</span><span class="p">(</span><span class="n">n_subaps1</span><span class="p">,</span> <span class="n">n_subaps2</span><span class="p">,</span> <span class="n">wfs1_positions</span><span class="p">,</span> <span class="n">wfs2_positions</span><span class="p">,</span> <span class="n">wfs1_diam</span><span class="p">,</span> <span class="n">wfs2_diam</span><span class="p">,</span> <span class="n">r0</span><span class="p">,</span> <span class="n">L0</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Calculates the covariance between 2 WFSs</span>
+
+<span class="sd">    Parameters:</span>
+<span class="sd">        n_subaps1 (int): number of sub-apertures in WFS 1</span>
+<span class="sd">        n_subaps2 (int): number of sub-apertures in WFS 1</span>
+<span class="sd">        wfs1_positions (ndarray): Central position of each sub-apeture from telescope centre for WFS 1</span>
+<span class="sd">        wfs2_positions (ndarray): Central position of each sub-apeture from telescope centre for WFS 2</span>
+<span class="sd">        wfs1_diam: Diameter of WFS 1 sub-apertures</span>
+<span class="sd">        wfs2_diam: Diameter of WFS 2 sub-apertures</span>
+<span class="sd">        r0: Fried parameter of turbulence</span>
+<span class="sd">        L0: Outer scale of turbulence</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        slope covariance of X with X , slope covariance of Y with Y, slope covariance of X with Y</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">xy_seperations</span> <span class="o">=</span> <span class="n">calculate_wfs_seperations</span><span class="p">(</span><span class="n">n_subaps1</span><span class="p">,</span> <span class="n">n_subaps2</span><span class="p">,</span> <span class="n">wfs1_positions</span><span class="p">,</span> <span class="n">wfs2_positions</span><span class="p">)</span>
+
+    <span class="c1"># print(&quot;Min seperation: {}&quot;.format(abs(xy_seperations).min()))</span>
+    <span class="n">cov_xx</span> <span class="o">=</span> <span class="n">compute_covariance_xx</span><span class="p">(</span><span class="n">xy_seperations</span><span class="p">,</span> <span class="n">wfs1_diam</span><span class="p">,</span> <span class="n">wfs2_diam</span><span class="p">,</span> <span class="n">r0</span><span class="p">,</span> <span class="n">L0</span><span class="p">)</span>
+    <span class="n">cov_yy</span> <span class="o">=</span> <span class="n">compute_covariance_yy</span><span class="p">(</span><span class="n">xy_seperations</span><span class="p">,</span> <span class="n">wfs1_diam</span><span class="p">,</span> <span class="n">wfs2_diam</span><span class="p">,</span> <span class="n">r0</span><span class="p">,</span> <span class="n">L0</span><span class="p">)</span>
+    <span class="n">cov_xy</span> <span class="o">=</span> <span class="n">compute_covariance_xy</span><span class="p">(</span><span class="n">xy_seperations</span><span class="p">,</span> <span class="n">wfs1_diam</span><span class="p">,</span> <span class="n">wfs2_diam</span><span class="p">,</span> <span class="n">r0</span><span class="p">,</span> <span class="n">L0</span><span class="p">)</span>
+
+
+    <span class="k">return</span> <span class="n">cov_xx</span><span class="p">,</span> <span class="n">cov_yy</span><span class="p">,</span> <span class="n">cov_xy</span></div>
+
+
+
+<div class="viewcode-block" id="calculate_wfs_seperations">
+<a class="viewcode-back" href="../../../turbulence.html#aotools.turbulence.slopecovariance.calculate_wfs_seperations">[docs]</a>
+<span class="k">def</span> <span class="nf">calculate_wfs_seperations</span><span class="p">(</span><span class="n">n_subaps1</span><span class="p">,</span> <span class="n">n_subaps2</span><span class="p">,</span> <span class="n">wfs1_positions</span><span class="p">,</span> <span class="n">wfs2_positions</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Calculates the seperation between all sub-apertures in two WFSs</span>
+
+<span class="sd">    Parameters:</span>
+<span class="sd">        n_subaps1 (int): Number of sub-apertures in WFS 1</span>
+<span class="sd">        n_subaps2 (int): Number of sub-apertures in WFS 2</span>
+<span class="sd">        wfs1_positions (ndarray): Array of the X, Y positions of the centre of each sub-aperture with respect to the centre of the telescope pupil</span>
+<span class="sd">        wfs2_positions (ndarray): Array of the X, Y positions of the centre of each sub-aperture with respect to the centre of the telescope pupil</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        ndarray: 2-D Array of sub-aperture seperations</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+
+    <span class="n">xy_separations</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">n_subaps1</span><span class="p">,</span> <span class="n">n_subaps2</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="s1">&#39;float64&#39;</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="p">(</span><span class="n">x1</span><span class="p">,</span> <span class="n">y1</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">wfs1_positions</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">j</span><span class="p">,</span> <span class="p">(</span><span class="n">x2</span><span class="p">,</span> <span class="n">y2</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">wfs2_positions</span><span class="p">):</span>
+            <span class="n">xy_separations</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">x2</span><span class="o">-</span><span class="n">x1</span><span class="p">),</span> <span class="p">(</span><span class="n">y2</span><span class="o">-</span><span class="n">y1</span><span class="p">)</span>
+
+    <span class="n">xy_separations</span> <span class="o">+=</span> <span class="mf">1e-20</span>
+
+    <span class="k">return</span> <span class="n">xy_separations</span></div>
+
+
+    <span class="c1"># def get_wfs_wfs_covariance(self, ):</span>
+
+
+<span class="k">def</span> <span class="nf">compute_covariance_xx</span><span class="p">(</span><span class="n">seperation</span><span class="p">,</span> <span class="n">subap1_diam</span><span class="p">,</span> <span class="n">subap2_diam</span><span class="p">,</span> <span class="n">r0</span><span class="p">,</span> <span class="n">L0</span><span class="p">):</span>
+
+    <span class="n">x1</span> <span class="o">=</span> <span class="n">seperation</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="p">(</span><span class="n">subap2_diam</span> <span class="o">-</span> <span class="n">subap1_diam</span><span class="p">)</span> <span class="o">*</span> <span class="mf">0.5</span>
+    <span class="n">r1</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">x1</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="n">seperation</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+
+    <span class="n">x2</span> <span class="o">=</span> <span class="n">seperation</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="p">(</span><span class="n">subap2_diam</span> <span class="o">+</span> <span class="n">subap1_diam</span><span class="p">)</span> <span class="o">*</span> <span class="mf">0.5</span>
+    <span class="n">r2</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">x2</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="n">seperation</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+
+    <span class="n">x3</span> <span class="o">=</span> <span class="n">seperation</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="p">(</span><span class="n">subap2_diam</span> <span class="o">+</span> <span class="n">subap1_diam</span><span class="p">)</span> <span class="o">*</span> <span class="mf">0.5</span>
+    <span class="n">r3</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">x3</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="n">seperation</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+
+    <span class="n">Cxx</span> <span class="o">=</span> <span class="p">(</span><span class="o">-</span><span class="mi">2</span> <span class="o">*</span> <span class="n">structure_function_vk</span><span class="p">(</span><span class="n">r1</span><span class="p">,</span> <span class="n">r0</span><span class="p">,</span> <span class="n">L0</span><span class="p">)</span>
+            <span class="o">+</span> <span class="n">structure_function_vk</span><span class="p">(</span><span class="n">r2</span><span class="p">,</span> <span class="n">r0</span><span class="p">,</span> <span class="n">L0</span><span class="p">)</span>
+            <span class="o">+</span> <span class="n">structure_function_vk</span><span class="p">(</span><span class="n">r3</span><span class="p">,</span> <span class="n">r0</span><span class="p">,</span> <span class="n">L0</span><span class="p">)</span>
+           <span class="p">)</span>
+
+
+    <span class="k">return</span> <span class="n">Cxx</span>
+
+<span class="k">def</span> <span class="nf">compute_covariance_yy</span><span class="p">(</span><span class="n">seperation</span><span class="p">,</span> <span class="n">subap1_diam</span><span class="p">,</span> <span class="n">subap2_diam</span><span class="p">,</span> <span class="n">r0</span><span class="p">,</span> <span class="n">L0</span><span class="p">):</span>
+
+    <span class="n">y1</span> <span class="o">=</span> <span class="n">seperation</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="p">(</span><span class="n">subap2_diam</span> <span class="o">-</span> <span class="n">subap1_diam</span><span class="p">)</span> <span class="o">*</span> <span class="mf">0.5</span>
+    <span class="n">r1</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">seperation</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="n">y1</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+
+    <span class="n">y2</span> <span class="o">=</span> <span class="n">seperation</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="p">(</span><span class="n">subap2_diam</span> <span class="o">+</span> <span class="n">subap1_diam</span><span class="p">)</span> <span class="o">*</span> <span class="mf">0.5</span>
+    <span class="n">r2</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">seperation</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="n">y2</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+
+    <span class="n">y3</span> <span class="o">=</span> <span class="n">seperation</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="p">(</span><span class="n">subap2_diam</span> <span class="o">+</span> <span class="n">subap1_diam</span><span class="p">)</span> <span class="o">*</span> <span class="mf">0.5</span>
+    <span class="n">r3</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">seperation</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="n">y3</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+
+    <span class="n">Cyy</span> <span class="o">=</span> <span class="p">(</span><span class="o">-</span><span class="mi">2</span> <span class="o">*</span> <span class="n">structure_function_vk</span><span class="p">(</span><span class="n">r1</span><span class="p">,</span> <span class="n">r0</span><span class="p">,</span> <span class="n">L0</span><span class="p">)</span>
+           <span class="o">+</span> <span class="n">structure_function_vk</span><span class="p">(</span><span class="n">r2</span><span class="p">,</span> <span class="n">r0</span><span class="p">,</span> <span class="n">L0</span><span class="p">)</span>
+           <span class="o">+</span> <span class="n">structure_function_vk</span><span class="p">(</span><span class="n">r3</span><span class="p">,</span> <span class="n">r0</span><span class="p">,</span> <span class="n">L0</span><span class="p">)</span>
+           <span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">Cyy</span>
+
+
+<span class="k">def</span> <span class="nf">compute_covariance_xy</span><span class="p">(</span><span class="n">seperation</span><span class="p">,</span> <span class="n">subap1_diam</span><span class="p">,</span> <span class="n">subap2_diam</span><span class="p">,</span> <span class="n">r0</span><span class="p">,</span> <span class="n">L0</span><span class="p">):</span>
+
+    <span class="n">x1</span> <span class="o">=</span> <span class="n">seperation</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="n">subap1_diam</span> <span class="o">*</span> <span class="mf">0.5</span>
+    <span class="n">y1</span> <span class="o">=</span> <span class="n">seperation</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">subap2_diam</span> <span class="o">*</span> <span class="mf">0.5</span>
+    <span class="n">r1</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">x1</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="n">y1</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+
+    <span class="n">x2</span> <span class="o">=</span> <span class="n">seperation</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="n">subap1_diam</span> <span class="o">*</span> <span class="mf">0.5</span>
+    <span class="n">y2</span> <span class="o">=</span> <span class="n">seperation</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">subap2_diam</span> <span class="o">*</span> <span class="mf">0.5</span>
+    <span class="n">r2</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">x2</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="n">y2</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+
+    <span class="n">x3</span> <span class="o">=</span> <span class="n">seperation</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="n">subap1_diam</span> <span class="o">*</span> <span class="mf">0.5</span>
+    <span class="n">y3</span> <span class="o">=</span> <span class="n">seperation</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">subap2_diam</span> <span class="o">*</span> <span class="mf">0.5</span>
+    <span class="n">r3</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">x3</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="n">y3</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+
+    <span class="n">x4</span> <span class="o">=</span> <span class="n">seperation</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="n">subap1_diam</span> <span class="o">*</span> <span class="mf">0.5</span>
+    <span class="n">y4</span> <span class="o">=</span> <span class="n">seperation</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">subap2_diam</span> <span class="o">*</span> <span class="mf">0.5</span>
+    <span class="n">r4</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">x4</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="n">y4</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+
+    <span class="c1"># print(&quot;\n&quot;,r1, r2, r3, r4)</span>
+
+    <span class="n">Cxy</span> <span class="o">=</span> <span class="p">(</span><span class="o">-</span> <span class="n">structure_function_vk</span><span class="p">(</span><span class="n">r1</span><span class="p">,</span> <span class="n">r0</span><span class="p">,</span> <span class="n">L0</span><span class="p">)</span>
+            <span class="o">-</span> <span class="n">structure_function_vk</span><span class="p">(</span><span class="n">r2</span><span class="p">,</span> <span class="n">r0</span><span class="p">,</span> <span class="n">L0</span><span class="p">)</span>
+            <span class="o">+</span> <span class="n">structure_function_vk</span><span class="p">(</span><span class="n">r3</span><span class="p">,</span> <span class="n">r0</span><span class="p">,</span> <span class="n">L0</span><span class="p">)</span>
+            <span class="o">+</span> <span class="n">structure_function_vk</span><span class="p">(</span><span class="n">r4</span><span class="p">,</span> <span class="n">r0</span><span class="p">,</span> <span class="n">L0</span><span class="p">)</span>
+           <span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">Cxy</span>
+
+<div class="viewcode-block" id="structure_function_vk">
+<a class="viewcode-back" href="../../../turbulence.html#aotools.turbulence.slopecovariance.structure_function_vk">[docs]</a>
+<span class="k">def</span> <span class="nf">structure_function_vk</span><span class="p">(</span><span class="n">seperation</span><span class="p">,</span> <span class="n">r0</span><span class="p">,</span> <span class="n">L0</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Computes the Von Karmon structure function of atmospheric turbulence</span>
+
+<span class="sd">    Parameters:</span>
+<span class="sd">        seperation (ndarray, float): float or array of data representing seperations between points</span>
+<span class="sd">        r0 (float): Fried parameter for atmosphere</span>
+<span class="sd">        L0 (float): Outer scale of turbulence</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        ndarray, float: Structure function for seperation(s)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1">## theoretical structure function</span>
+    <span class="n">D_vk</span> <span class="o">=</span> <span class="p">(</span>    <span class="mf">0.17253</span> <span class="o">*</span> <span class="p">(</span><span class="n">L0</span> <span class="o">/</span> <span class="p">(</span><span class="n">r0</span><span class="p">))</span> <span class="o">**</span> <span class="p">(</span><span class="mf">5.</span> <span class="o">/</span> <span class="mf">3.</span><span class="p">)</span>
+                <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">numpy</span><span class="o">.</span><span class="n">pi</span> <span class="o">**</span> <span class="p">(</span><span class="mf">5.</span> <span class="o">/</span> <span class="mf">6.</span><span class="p">)</span> <span class="o">*</span> <span class="p">((</span><span class="n">seperation</span><span class="p">)</span> <span class="o">/</span> <span class="n">L0</span><span class="p">)</span> <span class="o">**</span> <span class="p">(</span><span class="mf">5.</span> <span class="o">/</span> <span class="mf">6.</span><span class="p">)</span>
+                <span class="o">/</span> <span class="n">scipy</span><span class="o">.</span><span class="n">special</span><span class="o">.</span><span class="n">gamma</span><span class="p">(</span><span class="mf">5.</span> <span class="o">/</span> <span class="mf">6.</span><span class="p">)</span>
+                <span class="o">*</span> <span class="n">scipy</span><span class="o">.</span><span class="n">special</span><span class="o">.</span><span class="n">kv</span><span class="p">(</span><span class="mf">5.</span> <span class="o">/</span> <span class="mf">6.</span><span class="p">,</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">numpy</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="n">seperation</span><span class="p">)</span> <span class="o">/</span> <span class="n">L0</span><span class="p">))</span>
+            <span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">D_vk</span></div>
+
+
+
+<div class="viewcode-block" id="structure_function_kolmogorov">
+<a class="viewcode-back" href="../../../turbulence.html#aotools.turbulence.slopecovariance.structure_function_kolmogorov">[docs]</a>
+<span class="k">def</span> <span class="nf">structure_function_kolmogorov</span><span class="p">(</span><span class="n">separation</span><span class="p">,</span> <span class="n">r0</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Compute the Kolmogorov phase structure function</span>
+
+<span class="sd">        Parameters:</span>
+<span class="sd">            separation (ndarray, float): float or array of data representing</span>
+<span class="sd">                separations between points</span>
+<span class="sd">            r0 (float): Fried parameter for atmosphere</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            ndarray, float: Structure function for separation(s)</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="k">return</span> <span class="mf">6.88</span> <span class="o">*</span> <span class="p">(</span><span class="n">separation</span> <span class="o">/</span> <span class="n">r0</span><span class="p">)</span><span class="o">**</span><span class="p">(</span><span class="mf">5.</span> <span class="o">/</span> <span class="mf">3.</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="calculate_structure_function">
+<a class="viewcode-back" href="../../../turbulence.html#aotools.turbulence.slopecovariance.calculate_structure_function">[docs]</a>
+<span class="k">def</span> <span class="nf">calculate_structure_function</span><span class="p">(</span><span class="n">phase</span><span class="p">,</span> <span class="n">nbOfPoint</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">step</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Compute the structure function of an 2D array, along the first dimension.</span>
+<span class="sd">        SF defined as sf[j]= &lt; (phase - phase_shifted_by_j)^2 &gt;</span>
+<span class="sd">        Translated from a YAO function.</span>
+
+<span class="sd">        Parameters:</span>
+<span class="sd">            phase (ndarray, 2d): 2d-array</span>
+<span class="sd">            nbOfPoint (int): final size of the structure function vector. Default is phase.shape[1] / 4</span>
+<span class="sd">            step (int): step in pixel when computing the sf. (step * sampling_phase) gives the sf sampling in meters. Default is 1</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            ndarray, float: values for the structure function of the data.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="k">if</span> <span class="n">nbOfPoint</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">nbOfPoint</span> <span class="o">=</span> <span class="n">phase</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">/</span> <span class="mi">4</span>
+    <span class="k">if</span> <span class="n">step</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">step</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="n">step</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">step</span><span class="p">)</span>
+    <span class="n">xm</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">numpy</span><span class="o">.</span><span class="n">min</span><span class="p">([</span><span class="n">nbOfPoint</span><span class="p">,</span> <span class="n">phase</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">/</span> <span class="n">step</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]))</span>
+    <span class="n">sf_x</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="n">xm</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">step</span><span class="p">,</span> <span class="n">xm</span> <span class="o">*</span> <span class="n">step</span><span class="p">,</span> <span class="n">step</span><span class="p">):</span>
+        <span class="n">sf_x</span><span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">i</span> <span class="o">/</span> <span class="n">step</span><span class="p">)]</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">mean</span><span class="p">((</span><span class="n">phase</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="o">-</span><span class="n">i</span><span class="p">,</span> <span class="p">:]</span> <span class="o">-</span> <span class="n">phase</span><span class="p">[</span><span class="n">i</span><span class="p">:,</span> <span class="p">:])</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">sf_x</span></div>
+
+
+
+<div class="viewcode-block" id="mirror_covariance_matrix">
+<a class="viewcode-back" href="../../../turbulence.html#aotools.turbulence.slopecovariance.mirror_covariance_matrix">[docs]</a>
+<span class="k">def</span> <span class="nf">mirror_covariance_matrix</span><span class="p">(</span><span class="n">cov_mat</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Mirrors a covariance matrix around the axis of the diagonal.</span>
+
+<span class="sd">    Parameters:</span>
+<span class="sd">        cov_mat (ndarray): The covariance matrix to mirror</span>
+<span class="sd">        n_subaps (ndarray): Number of sub-aperture in each WFS</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">return</span> <span class="n">numpy</span><span class="o">.</span><span class="n">bitwise_or</span><span class="p">(</span><span class="n">cov_mat</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="s2">&quot;int32&quot;</span><span class="p">),</span> <span class="n">cov_mat</span><span class="o">.</span><span class="n">T</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="s2">&quot;int32&quot;</span><span class="p">))</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="s2">&quot;float32&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="create_tomographic_covariance_reconstructor">
+<a class="viewcode-back" href="../../../turbulence.html#aotools.turbulence.slopecovariance.create_tomographic_covariance_reconstructor">[docs]</a>
+<span class="k">def</span> <span class="nf">create_tomographic_covariance_reconstructor</span><span class="p">(</span><span class="n">covariance_matrix</span><span class="p">,</span> <span class="n">n_onaxis_subaps</span><span class="p">,</span> <span class="n">svd_conditioning</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Calculates a tomographic reconstructor using the method of Vidal, JOSA A, 2010.</span>
+
+<span class="sd">    Uses a slope covariance matrix to generate a reconstruction matrix that will convert a collection of measurements</span>
+<span class="sd">    from WFSs observing in a variety of directions (the &quot;off-axis&quot; directions) to the measurements that would have been</span>
+<span class="sd">    observed by a WFS observing in a different direction (the &quot;on-axis&quot; direction.</span>
+<span class="sd">    The given covariance matrix must include the covariance between all WFS measurements,</span>
+<span class="sd">    including the &quot;psuedo&quot; WFS pointing in the on-axis direction.</span>
+<span class="sd">    It is assumed that the covariance of measurements from this on-axis direction are first in the covariance matrix.</span>
+
+<span class="sd">    To create the tomographic reconstructor it is neccessary to invert the covariance matrix between off-axis WFS</span>
+<span class="sd">    measurements. An SVD based psueod inversion is used for this (`numpy.linalg.pinv`). A conditioning to this SVD may</span>
+<span class="sd">    be required to filter potentially unwanted modes.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        covariance_matrix (ndarray): A covariance matrix between WFSs</span>
+<span class="sd">        n_onaxis_subaps (int): Number of sub-aperture in on-axis WFS</span>
+<span class="sd">        svd_conditioning (float, optional): Conditioning for SVD inversion (default is 0)</span>
+
+<span class="sd">    Returns:</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">cov_onoff</span> <span class="o">=</span> <span class="n">covariance_matrix</span><span class="p">[:</span><span class="mi">2</span> <span class="o">*</span> <span class="n">n_onaxis_subaps</span><span class="p">,</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">n_onaxis_subaps</span><span class="p">:]</span>
+    <span class="n">cov_offoff</span> <span class="o">=</span> <span class="n">covariance_matrix</span><span class="p">[</span><span class="mi">2</span> <span class="o">*</span> <span class="n">n_onaxis_subaps</span><span class="p">:,</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">n_onaxis_subaps</span><span class="p">:]</span>
+
+
+    <span class="n">icov_offoff</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">pinv</span><span class="p">(</span><span class="n">cov_offoff</span><span class="p">,</span> <span class="n">rcond</span><span class="o">=</span><span class="n">svd_conditioning</span><span class="p">)</span>
+
+    <span class="n">tomo_recon</span> <span class="o">=</span> <span class="n">cov_onoff</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">icov_offoff</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">tomo_recon</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2019, The Authors.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,924 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Atmospheric Turbulence &mdash; AOtools 0.1.dev477+g8f38ff7c1.d20260605 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=fa44fd50" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=867f5289"></script>
+      <script src="_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Image Processing" href="image_processing.html" />
+    <link rel="prev" title="Introduction" href="introduction.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            AOtools
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="introduction.html">Introduction</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Atmospheric Turbulence</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#finite-phase-screens">Finite Phase Screens</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#aotools.turbulence.phasescreen.ft_phase_screen"><code class="docutils literal notranslate"><span class="pre">ft_phase_screen()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#aotools.turbulence.phasescreen.ft_sh_phase_screen"><code class="docutils literal notranslate"><span class="pre">ft_sh_phase_screen()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#infinite-phase-screens">Infinite Phase Screens</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#aotools.turbulence.infinitephasescreen.PhaseScreenKolmogorov"><code class="docutils literal notranslate"><span class="pre">PhaseScreenKolmogorov</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#aotools.turbulence.infinitephasescreen.PhaseScreenKolmogorov.add_row"><code class="docutils literal notranslate"><span class="pre">PhaseScreenKolmogorov.add_row()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#aotools.turbulence.infinitephasescreen.PhaseScreenKolmogorov.scrn"><code class="docutils literal notranslate"><span class="pre">PhaseScreenKolmogorov.scrn</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#aotools.turbulence.infinitephasescreen.PhaseScreenVonKarman"><code class="docutils literal notranslate"><span class="pre">PhaseScreenVonKarman</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#aotools.turbulence.infinitephasescreen.PhaseScreenVonKarman.add_row"><code class="docutils literal notranslate"><span class="pre">PhaseScreenVonKarman.add_row()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#aotools.turbulence.infinitephasescreen.PhaseScreenVonKarman.scrn"><code class="docutils literal notranslate"><span class="pre">PhaseScreenVonKarman.scrn</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#slope-covariance-matrix-generation">Slope Covariance Matrix Generation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#aotools.turbulence.slopecovariance.CovarianceMatrix"><code class="docutils literal notranslate"><span class="pre">CovarianceMatrix</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#aotools.turbulence.slopecovariance.CovarianceMatrix.make_covariance_matrix"><code class="docutils literal notranslate"><span class="pre">CovarianceMatrix.make_covariance_matrix()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#aotools.turbulence.slopecovariance.CovarianceMatrix.make_tomographic_reconstructor"><code class="docutils literal notranslate"><span class="pre">CovarianceMatrix.make_tomographic_reconstructor()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#aotools.turbulence.slopecovariance.calculate_structure_function"><code class="docutils literal notranslate"><span class="pre">calculate_structure_function()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#aotools.turbulence.slopecovariance.calculate_wfs_seperations"><code class="docutils literal notranslate"><span class="pre">calculate_wfs_seperations()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#aotools.turbulence.slopecovariance.create_tomographic_covariance_reconstructor"><code class="docutils literal notranslate"><span class="pre">create_tomographic_covariance_reconstructor()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#aotools.turbulence.slopecovariance.mirror_covariance_matrix"><code class="docutils literal notranslate"><span class="pre">mirror_covariance_matrix()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#aotools.turbulence.slopecovariance.structure_function_kolmogorov"><code class="docutils literal notranslate"><span class="pre">structure_function_kolmogorov()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#aotools.turbulence.slopecovariance.structure_function_vk"><code class="docutils literal notranslate"><span class="pre">structure_function_vk()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#aotools.turbulence.slopecovariance.wfs_covariance"><code class="docutils literal notranslate"><span class="pre">wfs_covariance()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#aotools.turbulence.slopecovariance.wfs_covariance_mpwrap"><code class="docutils literal notranslate"><span class="pre">wfs_covariance_mpwrap()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#temporal-power-spectra">Temporal Power Spectra</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#aotools.turbulence.temporal_ps.calc_slope_temporalps"><code class="docutils literal notranslate"><span class="pre">calc_slope_temporalps()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#aotools.turbulence.temporal_ps.fit_tps"><code class="docutils literal notranslate"><span class="pre">fit_tps()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#aotools.turbulence.temporal_ps.get_tps_time_axis"><code class="docutils literal notranslate"><span class="pre">get_tps_time_axis()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#aotools.turbulence.temporal_ps.plot_tps"><code class="docutils literal notranslate"><span class="pre">plot_tps()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#atmospheric-parameter-conversions">Atmospheric Parameter Conversions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#aotools.turbulence.atmos_conversions.cn2_to_r0"><code class="docutils literal notranslate"><span class="pre">cn2_to_r0()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#aotools.turbulence.atmos_conversions.cn2_to_seeing"><code class="docutils literal notranslate"><span class="pre">cn2_to_seeing()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#aotools.turbulence.atmos_conversions.coherenceTime"><code class="docutils literal notranslate"><span class="pre">coherenceTime()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#aotools.turbulence.atmos_conversions.isoplanaticAngle"><code class="docutils literal notranslate"><span class="pre">isoplanaticAngle()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#aotools.turbulence.atmos_conversions.r0_from_slopes"><code class="docutils literal notranslate"><span class="pre">r0_from_slopes()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#aotools.turbulence.atmos_conversions.r0_to_cn2"><code class="docutils literal notranslate"><span class="pre">r0_to_cn2()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#aotools.turbulence.atmos_conversions.r0_to_seeing"><code class="docutils literal notranslate"><span class="pre">r0_to_seeing()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#aotools.turbulence.atmos_conversions.rytov_variance"><code class="docutils literal notranslate"><span class="pre">rytov_variance()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#aotools.turbulence.atmos_conversions.seeing_to_cn2"><code class="docutils literal notranslate"><span class="pre">seeing_to_cn2()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#aotools.turbulence.atmos_conversions.seeing_to_r0"><code class="docutils literal notranslate"><span class="pre">seeing_to_r0()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#aotools.turbulence.atmos_conversions.slope_variance_from_r0"><code class="docutils literal notranslate"><span class="pre">slope_variance_from_r0()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="image_processing.html">Image Processing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="zernike.html">Circular Functions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="pupil.html">Telescope Pupils</a></li>
+<li class="toctree-l1"><a class="reference internal" href="wfs.html">Wavefront Sensors</a></li>
+<li class="toctree-l1"><a class="reference internal" href="opticalpropagation.html">Optical Propagation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="astronomy.html">Astronomical Functions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="fft.html">Normalised Fourier Transforms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="interpolation.html">Interpolation</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">AOtools</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Atmospheric Turbulence</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/turbulence.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-aotools.turbulence.phasescreen">
+<span id="atmospheric-turbulence"></span><h1>Atmospheric Turbulence<a class="headerlink" href="#module-aotools.turbulence.phasescreen" title="Link to this heading"></a></h1>
+<section id="finite-phase-screens">
+<h2>Finite Phase Screens<a class="headerlink" href="#finite-phase-screens" title="Link to this heading"></a></h2>
+<p>Creation of phase screens of a defined size with Von Karmen Statistics.</p>
+</section>
+<dl class="py function">
+<dt class="sig sig-object py" id="aotools.turbulence.phasescreen.ft_phase_screen">
+<span class="sig-prename descclassname"><span class="pre">aotools.turbulence.phasescreen.</span></span><span class="sig-name descname"><span class="pre">ft_phase_screen</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">r0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">N</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">delta</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">L0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">l0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">FFT</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/aotools/turbulence/phasescreen.html#ft_phase_screen"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#aotools.turbulence.phasescreen.ft_phase_screen" title="Link to this definition"></a></dt>
+<dd><p>Creates a random phase screen with Von Karmen statistics.
+(Schmidt 2010)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>r0</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>) – r0 parameter of scrn in metres</p></li>
+<li><p><strong>N</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – Size of phase scrn in pxls</p></li>
+<li><p><strong>delta</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>) – size in Metres of each pxl</p></li>
+<li><p><strong>L0</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>) – Size of outer-scale in metres</p></li>
+<li><p><strong>l0</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>) – inner scale in metres</p></li>
+<li><p><strong>seed</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a><em>, </em><em>optional</em>) – seed for random number generator. If provided,
+allows for deterministic screens</p></li>
+</ul>
+</dd>
+</dl>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The phase screen is returned as a 2d array, with each element representing the phase
+change in <strong>radians</strong>. This means that to obtain the physical phase distortion in nanometres,
+it must be multiplied by (wavelength / (2*pi)), (where <cite>wavellength</cite> here is the same wavelength
+in which r0 is given in the function arguments)</p>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>numpy array representing phase screen in radians</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>ndarray</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="aotools.turbulence.phasescreen.ft_sh_phase_screen">
+<span class="sig-prename descclassname"><span class="pre">aotools.turbulence.phasescreen.</span></span><span class="sig-name descname"><span class="pre">ft_sh_phase_screen</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">r0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">N</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">delta</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">L0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">l0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">FFT</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/aotools/turbulence/phasescreen.html#ft_sh_phase_screen"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#aotools.turbulence.phasescreen.ft_sh_phase_screen" title="Link to this definition"></a></dt>
+<dd><p>Creates a random phase screen with Von Karmen statistics with added
+sub-harmonics to augment tip-tilt modes.
+(Schmidt 2010)</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The phase screen is returned as a 2d array, with each element representing the phase
+change in <strong>radians</strong>. This means that to obtain the physical phase distortion in nanometres,
+it must be multiplied by (wavelength / (2*pi)), (where <cite>wavellength</cite> here is the same wavelength
+in which r0 is given in the function arguments)</p>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>r0</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>) – r0 parameter of scrn in metres</p></li>
+<li><p><strong>N</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – Size of phase scrn in pxls</p></li>
+<li><p><strong>delta</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>) – size in Metres of each pxl</p></li>
+<li><p><strong>L0</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>) – Size of outer-scale in metres</p></li>
+<li><p><strong>l0</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>) – inner scale in metres</p></li>
+<li><p><strong>seed</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a><em>, </em><em>optional</em>) – seed for random number generator. If provided,
+allows for deterministic screens</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>numpy array representing phase screen in radians</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>ndarray</p>
+</dd>
+</dl>
+</dd></dl>
+
+<section id="infinite-phase-screens">
+<span id="module-aotools.turbulence.infinitephasescreen"></span><h2>Infinite Phase Screens<a class="headerlink" href="#infinite-phase-screens" title="Link to this heading"></a></h2>
+<p>An implementation of the “infinite phase screen”, as deduced by Francois Assemat and Richard W. Wilson, 2006.</p>
+</section>
+<dl class="py class">
+<dt class="sig sig-object py" id="aotools.turbulence.infinitephasescreen.PhaseScreenKolmogorov">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">aotools.turbulence.infinitephasescreen.</span></span><span class="sig-name descname"><span class="pre">PhaseScreenKolmogorov</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">nx_size</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pixel_scale</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">r0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">L0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">random_seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stencil_length_factor</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">4</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/aotools/turbulence/infinitephasescreen.html#PhaseScreenKolmogorov"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#aotools.turbulence.infinitephasescreen.PhaseScreenKolmogorov" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">PhaseScreen</span></code></p>
+<p>A “Phase Screen” for use in AO simulation using the Fried method for Kolmogorov turbulence.</p>
+<p>This represents the phase addition light experiences when passing through atmospheric
+turbulence. Unlike other phase screen generation techniques that translate a large static
+screen, this method keeps a small section of phase, and extends it as neccessary for as many
+steps as required. This can significantly reduce memory consuption at the expense of more
+processing power required.</p>
+<p>The technique is described in a paper by Assemat and Wilson, 2006 and expanded upon by Fried, 2008.
+It essentially assumes that there are two matrices, “A” and “B”,
+that can be used to extend an existing phase screen.
+A single row or column of new phase can be represented by</p>
+<blockquote>
+<div><p>X = A.Z + B.b</p>
+</div></blockquote>
+<p>where X is the new phase vector, Z is some data from the existing screen,
+and b is a random vector with gaussian statistics.</p>
+<p>This object calculates the A and B matrices using an expression of the phase covariance when it
+is initialised. Calculating A is straightforward through the relationship:</p>
+<blockquote>
+<div><p>A =  Cov_xz . (Cov_zz)^(-1).</p>
+</div></blockquote>
+<p>B is less trivial.</p>
+<blockquote>
+<div><p>BB^t = Cov_xx - A.Cov_zx</p>
+</div></blockquote>
+<p>(where B^t is the transpose of B) is a symmetric matrix, hence B can be expressed as</p>
+<blockquote>
+<div><p>B = UL,</p>
+</div></blockquote>
+<p>where U and L are obtained from the svd for BB^t</p>
+<blockquote>
+<div><p>U, w, U^t = svd(BB^t)</p>
+</div></blockquote>
+<p>L is a diagonal matrix where the diagonal elements are w^(1/2).</p>
+<p>The Z data is taken from points in a “stencil” defined by Fried that samples the entire screen.
+An additional “reference point” is also considered, that is picked from a point separate from teh stencil
+and applied on each iteration such that the new phase equation becomes:</p>
+<p>On initialisation an initial phase screen is calculated using an FFT based method.
+When <code class="docutils literal notranslate"><span class="pre">add_row</span></code> is called, a new vector of phase is added to the phase screen. The phase in the screen data
+is always accessed as <code class="docutils literal notranslate"><span class="pre">&lt;phasescreen&gt;.scrn</span></code> and is in radians.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The phase screen is returned on each iteration as a 2d array, with each element representing the phase
+change in <strong>radians</strong>. This means that to obtain the physical phase distortion in nanometres,
+it must be multiplied by (wavelength / (2*pi)), (where <cite>wavellength</cite> here is the same wavelength
+in which r0 is given in the function arguments)</p>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>nx_size</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – Size of phase screen (NxN)</p></li>
+<li><p><strong>pixel_scale</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>) – Size of each phase pixel in metres</p></li>
+<li><p><strong>r0</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>) – fried parameter (metres)</p></li>
+<li><p><strong>L0</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>) – Outer scale (metres)</p></li>
+<li><p><strong>random_seed</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a><em>, </em><em>optional</em>) – seed for the random number generator</p></li>
+<li><p><strong>stencil_length_factor</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a><em>, </em><em>optional</em>) – How much longer is the stencil than the desired phase? default is 4</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="aotools.turbulence.infinitephasescreen.PhaseScreenKolmogorov.add_row">
+<span class="sig-name descname"><span class="pre">add_row</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#aotools.turbulence.infinitephasescreen.PhaseScreenKolmogorov.add_row" title="Link to this definition"></a></dt>
+<dd><p>Adds a new row to the phase screen and removes old ones.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="aotools.turbulence.infinitephasescreen.PhaseScreenKolmogorov.scrn">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">scrn</span></span><a class="headerlink" href="#aotools.turbulence.infinitephasescreen.PhaseScreenKolmogorov.scrn" title="Link to this definition"></a></dt>
+<dd><p>The current phase map held in the PhaseScreen object in radians.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="aotools.turbulence.infinitephasescreen.PhaseScreenVonKarman">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">aotools.turbulence.infinitephasescreen.</span></span><span class="sig-name descname"><span class="pre">PhaseScreenVonKarman</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">nx_size</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pixel_scale</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">r0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">L0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">random_seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_columns</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/aotools/turbulence/infinitephasescreen.html#PhaseScreenVonKarman"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#aotools.turbulence.infinitephasescreen.PhaseScreenVonKarman" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">PhaseScreen</span></code></p>
+<p>A “Phase Screen” for use in AO simulation with Von Karmon statistics.</p>
+<p>This represents the phase addition light experiences when passing through atmospheric
+turbulence. Unlike other phase screen generation techniques that translate a large static
+screen, this method keeps a small section of phase, and extends it as necessary for as many
+steps as required. This can significantly reduce memory consumption at the expense of more
+processing power required.</p>
+<p>The technique is described in a paper by Assemat and Wilson, 2006. It essentially assumes that
+there are two matrices, “A” and “B”, that can be used to extend an existing phase screen.
+A single row or column of new phase can be represented by</p>
+<blockquote>
+<div><p>X = A.Z + B.b</p>
+</div></blockquote>
+<p>where X is the new phase vector, Z is some number of columns of the existing screen,
+and b is a random vector with gaussian statistics.</p>
+<p>This object calculates the A and B matrices using an expression of the phase covariance when it
+is initialised. Calculating A is straightforward through the relationship:</p>
+<blockquote>
+<div><p>A =  Cov_xz . (Cov_zz)^(-1).</p>
+</div></blockquote>
+<p>B is less trivial.</p>
+<blockquote>
+<div><p>BB^t = Cov_xx - A.Cov_zx</p>
+</div></blockquote>
+<p>(where B^t is the transpose of B) is a symmetric matrix, hence B can be expressed as</p>
+<blockquote>
+<div><p>B = UL,</p>
+</div></blockquote>
+<p>where U and L are obtained from the svd for BB^t</p>
+<blockquote>
+<div><p>U, w, U^t = svd(BB^t)</p>
+</div></blockquote>
+<p>L is a diagonal matrix where the diagonal elements are w^(1/2).</p>
+<p>On initialisation an initial phase screen is calculated using an FFT based method.
+When <code class="docutils literal notranslate"><span class="pre">add_row</span></code> is called, a new vector of phase is added to the phase screen using <cite>nCols</cite>
+columns of previous phase. Assemat &amp; Wilson claim that two columns are adequate for good
+atmospheric statistics. The phase in the screen data is always accessed as <code class="docutils literal notranslate"><span class="pre">&lt;phasescreen&gt;.scrn</span></code> and is in radians.</p>
+<blockquote>
+<div><p>The phase screen is returned on each iteration as a 2d array, with each element representing the phase
+change in <strong>radians</strong>. This means that to obtain the physical phase distortion in nanometres,
+it must be multiplied by (wavelength / (2*pi)), (where <cite>wavellength</cite> here is the same wavelength
+in which r0 is given in the function arguments)</p>
+</div></blockquote>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>nx_size</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – Size of phase screen (NxN)</p></li>
+<li><p><strong>pixel_scale</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>) – Size of each phase pixel in metres</p></li>
+<li><p><strong>r0</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>) – fried parameter (metres)</p></li>
+<li><p><strong>L0</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>) – Outer scale (metres)</p></li>
+<li><p><strong>random_seed</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a><em>, </em><em>optional</em>) – seed for the random number generator</p></li>
+<li><p><strong>n_columns</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a><em>, </em><em>optional</em>) – Number of columns to use to continue screen, default is 2</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="aotools.turbulence.infinitephasescreen.PhaseScreenVonKarman.add_row">
+<span class="sig-name descname"><span class="pre">add_row</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#aotools.turbulence.infinitephasescreen.PhaseScreenVonKarman.add_row" title="Link to this definition"></a></dt>
+<dd><p>Adds a new row to the phase screen and removes old ones.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="aotools.turbulence.infinitephasescreen.PhaseScreenVonKarman.scrn">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">scrn</span></span><a class="headerlink" href="#aotools.turbulence.infinitephasescreen.PhaseScreenVonKarman.scrn" title="Link to this definition"></a></dt>
+<dd><p>The current phase map held in the PhaseScreen object in radians.</p>
+</dd></dl>
+
+</dd></dl>
+
+<section id="slope-covariance-matrix-generation">
+<span id="module-aotools.turbulence.slopecovariance"></span><h2>Slope Covariance Matrix Generation<a class="headerlink" href="#slope-covariance-matrix-generation" title="Link to this heading"></a></h2>
+<p>Slope covariance matrix routines for AO systems observing through Von Karmon turbulence. Such matrices have a variety
+of uses, though they are especially useful for creating ‘tomographic reconstructors’ that can reconstruct some ‘psuedo’
+WFS measurements in a required direction (where there might be an interesting science target but no guide stars),
+given some actual measurements in other directions (where the some suitable guide stars are).</p>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>This code has been tested qualitatively and seems OK, but needs more rigorous testing.</p>
+</div>
+</section>
+<dl class="py class">
+<dt class="sig sig-object py" id="aotools.turbulence.slopecovariance.CovarianceMatrix">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">aotools.turbulence.slopecovariance.</span></span><span class="sig-name descname"><span class="pre">CovarianceMatrix</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n_wfs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pupil_masks</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">telescope_diameter</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">subap_diameters</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gs_altitudes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gs_positions</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">wfs_wavelengths</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_layers</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">layer_altitudes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">layer_r0s</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">layer_L0s</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">threads</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/aotools/turbulence/slopecovariance.html#CovarianceMatrix"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#aotools.turbulence.slopecovariance.CovarianceMatrix" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<p>A creator of slope covariance matrices in Von Karmon turbulence, based on the paper by Martin et al, SPIE, 2012.</p>
+<p>Given a list of paramters describing an AO WFS system and the atmosphere above the telescope, this class can
+compute the covariance matrix between all the WFS measurements. This can support LGS sources that exist at a
+finite altitude. When computing the covariance matrix, Python’s multiprocessing module is used to spread the work
+between different processes and processing cores.</p>
+<p>On initialisation, this class performs some initial calculations and parameter sorting. To create the
+covariance matrix run the <code class="docutils literal notranslate"><span class="pre">make_covariace_matrix</span></code> method. This may take some time depending on your paramters…</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>n_wfs</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – Number of wavefront sensors present.</p></li>
+<li><p><strong>pupil_masks</strong> (<em>ndarray</em>) – A map of the pupil for each WFS which is nx_subaps by ny_subaps. 1 if subap active, 0 if not.</p></li>
+<li><p><strong>telescope_diameter</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>) – Diameter of the telescope</p></li>
+<li><p><strong>subap_diameters</strong> (<em>ndarray</em>) – The diameter of the sub-apertures for each WFS in metres</p></li>
+<li><p><strong>gs_altitudes</strong> (<em>ndarray</em>) – Reciprocal (1/metres) of the Guide star alitude for each WFS</p></li>
+<li><p><strong>gs_positions</strong> (<em>ndarray</em>) – X,Y position of each WFS in arcsecs. Array shape (Wfs, 2)</p></li>
+<li><p><strong>wfs_wavelengths</strong> (<em>ndarray</em>) – Wavelength each WFS observes</p></li>
+<li><p><strong>n_layers</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – The number of atmospheric turbulence layers</p></li>
+<li><p><strong>layer_altitudes</strong> (<em>ndarray</em>) – The altitude of each turbulence layer in meters</p></li>
+<li><p><strong>layer_r0s</strong> (<em>ndarray</em>) – The Fried parameter of each turbulence layer</p></li>
+<li><p><strong>layer_L0s</strong> (<em>ndarray</em>) – The outer-scale of each layer in metres</p></li>
+<li><p><strong>threads</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a><em>, </em><em>optional</em>) – Number of processes to use for calculation. default is 1</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="aotools.turbulence.slopecovariance.CovarianceMatrix.make_covariance_matrix">
+<span class="sig-name descname"><span class="pre">make_covariance_matrix</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/aotools/turbulence/slopecovariance.html#CovarianceMatrix.make_covariance_matrix"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#aotools.turbulence.slopecovariance.CovarianceMatrix.make_covariance_matrix" title="Link to this definition"></a></dt>
+<dd><p>Calculate and build the covariance matrix</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Covariance Matrix</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>ndarray</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="aotools.turbulence.slopecovariance.CovarianceMatrix.make_tomographic_reconstructor">
+<span class="sig-name descname"><span class="pre">make_tomographic_reconstructor</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">svd_conditioning</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/aotools/turbulence/slopecovariance.html#CovarianceMatrix.make_tomographic_reconstructor"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#aotools.turbulence.slopecovariance.CovarianceMatrix.make_tomographic_reconstructor" title="Link to this definition"></a></dt>
+<dd><p>Creats a tomohraphic reconstructor from the covariance matrix as in Vidal, 2010.
+See the documentation for the function <cite>create_tomographic_covariance_reconstructor</cite> in this module.
+Assumes the 1st WFS given is the one for which reconstruction is required to.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>svd_conditioning</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>) – Conditioning for the SVD used in inversion.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A tomohraphic reconstructor.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>ndarray</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="aotools.turbulence.slopecovariance.calculate_structure_function">
+<span class="sig-prename descclassname"><span class="pre">aotools.turbulence.slopecovariance.</span></span><span class="sig-name descname"><span class="pre">calculate_structure_function</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">phase</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nbOfPoint</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">step</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/aotools/turbulence/slopecovariance.html#calculate_structure_function"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#aotools.turbulence.slopecovariance.calculate_structure_function" title="Link to this definition"></a></dt>
+<dd><p>Compute the structure function of an 2D array, along the first dimension.
+SF defined as sf[j]= &lt; (phase - phase_shifted_by_j)^2 &gt;
+Translated from a YAO function.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>phase</strong> (<em>ndarray</em><em>, </em><em>2d</em>) – 2d-array</p></li>
+<li><p><strong>nbOfPoint</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – final size of the structure function vector. Default is phase.shape[1] / 4</p></li>
+<li><p><strong>step</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – step in pixel when computing the sf. (step * sampling_phase) gives the sf sampling in meters. Default is 1</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>values for the structure function of the data.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>ndarray, <a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)">float</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="aotools.turbulence.slopecovariance.calculate_wfs_seperations">
+<span class="sig-prename descclassname"><span class="pre">aotools.turbulence.slopecovariance.</span></span><span class="sig-name descname"><span class="pre">calculate_wfs_seperations</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n_subaps1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_subaps2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">wfs1_positions</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">wfs2_positions</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/aotools/turbulence/slopecovariance.html#calculate_wfs_seperations"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#aotools.turbulence.slopecovariance.calculate_wfs_seperations" title="Link to this definition"></a></dt>
+<dd><p>Calculates the seperation between all sub-apertures in two WFSs</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>n_subaps1</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – Number of sub-apertures in WFS 1</p></li>
+<li><p><strong>n_subaps2</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – Number of sub-apertures in WFS 2</p></li>
+<li><p><strong>wfs1_positions</strong> (<em>ndarray</em>) – Array of the X, Y positions of the centre of each sub-aperture with respect to the centre of the telescope pupil</p></li>
+<li><p><strong>wfs2_positions</strong> (<em>ndarray</em>) – Array of the X, Y positions of the centre of each sub-aperture with respect to the centre of the telescope pupil</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>2-D Array of sub-aperture seperations</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>ndarray</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="aotools.turbulence.slopecovariance.create_tomographic_covariance_reconstructor">
+<span class="sig-prename descclassname"><span class="pre">aotools.turbulence.slopecovariance.</span></span><span class="sig-name descname"><span class="pre">create_tomographic_covariance_reconstructor</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">covariance_matrix</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_onaxis_subaps</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">svd_conditioning</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/aotools/turbulence/slopecovariance.html#create_tomographic_covariance_reconstructor"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#aotools.turbulence.slopecovariance.create_tomographic_covariance_reconstructor" title="Link to this definition"></a></dt>
+<dd><p>Calculates a tomographic reconstructor using the method of Vidal, JOSA A, 2010.</p>
+<p>Uses a slope covariance matrix to generate a reconstruction matrix that will convert a collection of measurements
+from WFSs observing in a variety of directions (the “off-axis” directions) to the measurements that would have been
+observed by a WFS observing in a different direction (the “on-axis” direction.
+The given covariance matrix must include the covariance between all WFS measurements,
+including the “psuedo” WFS pointing in the on-axis direction.
+It is assumed that the covariance of measurements from this on-axis direction are first in the covariance matrix.</p>
+<p>To create the tomographic reconstructor it is neccessary to invert the covariance matrix between off-axis WFS
+measurements. An SVD based psueod inversion is used for this (<cite>numpy.linalg.pinv</cite>). A conditioning to this SVD may
+be required to filter potentially unwanted modes.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>covariance_matrix</strong> (<em>ndarray</em>) – A covariance matrix between WFSs</p></li>
+<li><p><strong>n_onaxis_subaps</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – Number of sub-aperture in on-axis WFS</p></li>
+<li><p><strong>svd_conditioning</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a><em>, </em><em>optional</em>) – Conditioning for SVD inversion (default is 0)</p></li>
+</ul>
+</dd>
+</dl>
+<p>Returns:</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="aotools.turbulence.slopecovariance.mirror_covariance_matrix">
+<span class="sig-prename descclassname"><span class="pre">aotools.turbulence.slopecovariance.</span></span><span class="sig-name descname"><span class="pre">mirror_covariance_matrix</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cov_mat</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/aotools/turbulence/slopecovariance.html#mirror_covariance_matrix"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#aotools.turbulence.slopecovariance.mirror_covariance_matrix" title="Link to this definition"></a></dt>
+<dd><p>Mirrors a covariance matrix around the axis of the diagonal.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>cov_mat</strong> (<em>ndarray</em>) – The covariance matrix to mirror</p></li>
+<li><p><strong>n_subaps</strong> (<em>ndarray</em>) – Number of sub-aperture in each WFS</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="aotools.turbulence.slopecovariance.structure_function_kolmogorov">
+<span class="sig-prename descclassname"><span class="pre">aotools.turbulence.slopecovariance.</span></span><span class="sig-name descname"><span class="pre">structure_function_kolmogorov</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">separation</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">r0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/aotools/turbulence/slopecovariance.html#structure_function_kolmogorov"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#aotools.turbulence.slopecovariance.structure_function_kolmogorov" title="Link to this definition"></a></dt>
+<dd><p>Compute the Kolmogorov phase structure function</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>separation</strong> (<em>ndarray</em><em>, </em><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>) – float or array of data representing
+separations between points</p></li>
+<li><p><strong>r0</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>) – Fried parameter for atmosphere</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Structure function for separation(s)</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>ndarray, <a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)">float</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="aotools.turbulence.slopecovariance.structure_function_vk">
+<span class="sig-prename descclassname"><span class="pre">aotools.turbulence.slopecovariance.</span></span><span class="sig-name descname"><span class="pre">structure_function_vk</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">seperation</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">r0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">L0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/aotools/turbulence/slopecovariance.html#structure_function_vk"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#aotools.turbulence.slopecovariance.structure_function_vk" title="Link to this definition"></a></dt>
+<dd><p>Computes the Von Karmon structure function of atmospheric turbulence</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>seperation</strong> (<em>ndarray</em><em>, </em><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>) – float or array of data representing seperations between points</p></li>
+<li><p><strong>r0</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>) – Fried parameter for atmosphere</p></li>
+<li><p><strong>L0</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>) – Outer scale of turbulence</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Structure function for seperation(s)</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>ndarray, <a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)">float</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="aotools.turbulence.slopecovariance.wfs_covariance">
+<span class="sig-prename descclassname"><span class="pre">aotools.turbulence.slopecovariance.</span></span><span class="sig-name descname"><span class="pre">wfs_covariance</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n_subaps1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_subaps2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">wfs1_positions</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">wfs2_positions</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">wfs1_diam</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">wfs2_diam</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">r0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">L0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/aotools/turbulence/slopecovariance.html#wfs_covariance"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#aotools.turbulence.slopecovariance.wfs_covariance" title="Link to this definition"></a></dt>
+<dd><p>Calculates the covariance between 2 WFSs</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>n_subaps1</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – number of sub-apertures in WFS 1</p></li>
+<li><p><strong>n_subaps2</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – number of sub-apertures in WFS 1</p></li>
+<li><p><strong>wfs1_positions</strong> (<em>ndarray</em>) – Central position of each sub-apeture from telescope centre for WFS 1</p></li>
+<li><p><strong>wfs2_positions</strong> (<em>ndarray</em>) – Central position of each sub-apeture from telescope centre for WFS 2</p></li>
+<li><p><strong>wfs1_diam</strong> – Diameter of WFS 1 sub-apertures</p></li>
+<li><p><strong>wfs2_diam</strong> – Diameter of WFS 2 sub-apertures</p></li>
+<li><p><strong>r0</strong> – Fried parameter of turbulence</p></li>
+<li><p><strong>L0</strong> – Outer scale of turbulence</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>slope covariance of X with X , slope covariance of Y with Y, slope covariance of X with Y</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="aotools.turbulence.slopecovariance.wfs_covariance_mpwrap">
+<span class="sig-prename descclassname"><span class="pre">aotools.turbulence.slopecovariance.</span></span><span class="sig-name descname"><span class="pre">wfs_covariance_mpwrap</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">args</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/aotools/turbulence/slopecovariance.html#wfs_covariance_mpwrap"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#aotools.turbulence.slopecovariance.wfs_covariance_mpwrap" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<section id="temporal-power-spectra">
+<span id="module-aotools.turbulence.temporal_ps"></span><h2>Temporal Power Spectra<a class="headerlink" href="#temporal-power-spectra" title="Link to this heading"></a></h2>
+<p>Turbulence gradient temporal power spectra calculation and plotting</p>
+<dl class="field-list simple">
+<dt class="field-odd">author<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Andrew Reeves</p>
+</dd>
+<dt class="field-even">date<span class="colon">:</span></dt>
+<dd class="field-even"><p>September 2016</p>
+</dd>
+</dl>
+</section>
+<dl class="py function">
+<dt class="sig sig-object py" id="aotools.turbulence.temporal_ps.calc_slope_temporalps">
+<span class="sig-prename descclassname"><span class="pre">aotools.turbulence.temporal_ps.</span></span><span class="sig-name descname"><span class="pre">calc_slope_temporalps</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">slope_data</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/aotools/turbulence/temporal_ps.html#calc_slope_temporalps"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#aotools.turbulence.temporal_ps.calc_slope_temporalps" title="Link to this definition"></a></dt>
+<dd><p>Calculates the temporal power spectra of the loaded centroid data.</p>
+<p>Calculates the Fourier transform over the number frames of the centroid
+data, then returns the square of the  mean of all sub-apertures, for x
+and y. This is a temporal power spectra of the slopes, and should adhere
+to a -11/3 power law for the slopes in the wind direction, and -14/3 in
+the direction tranverse to the wind direction. See Conan, 1995 for more.</p>
+<p>The phase slope data should be split into X and Y components, with all X data first, then Y (or visa-versa).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>slope_data</strong> (<em>ndarray</em>) – 2-d array of shape (…, nFrames, nCentroids)</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The temporal power spectra of the data for X and Y components.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>ndarray</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="aotools.turbulence.temporal_ps.fit_tps">
+<span class="sig-prename descclassname"><span class="pre">aotools.turbulence.temporal_ps.</span></span><span class="sig-name descname"><span class="pre">fit_tps</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tps</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">t_axis</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">D</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">V_guess</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">f_noise_guess</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">20</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">A_guess</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">9</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tps_err</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plot</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/aotools/turbulence/temporal_ps.html#fit_tps"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#aotools.turbulence.temporal_ps.fit_tps" title="Link to this definition"></a></dt>
+<dd><p>Runs minimization routines to get t0.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>tps</strong> (<em>ndarray</em>) – The temporal power spectrum to fit</p></li>
+<li><p><strong>axis</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – fit parallel (‘par’) or perpendicular (‘per’) to wind direction</p></li>
+<li><p><strong>D</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>) – (Sub-)Aperture diameter</p></li>
+</ul>
+</dd>
+</dl>
+<p>Returns:</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="aotools.turbulence.temporal_ps.get_tps_time_axis">
+<span class="sig-prename descclassname"><span class="pre">aotools.turbulence.temporal_ps.</span></span><span class="sig-name descname"><span class="pre">get_tps_time_axis</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">frame_rate</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_frames</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/aotools/turbulence/temporal_ps.html#get_tps_time_axis"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#aotools.turbulence.temporal_ps.get_tps_time_axis" title="Link to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>frame_rate</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>) – Frame rate of detector observing slope gradients (Hz)</p></li>
+<li><p><strong>n_frames</strong> – (int): Number of frames used for temporal power spectrum</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Time values for temporal power spectra plots</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>ndarray</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="aotools.turbulence.temporal_ps.plot_tps">
+<span class="sig-prename descclassname"><span class="pre">aotools.turbulence.temporal_ps.</span></span><span class="sig-name descname"><span class="pre">plot_tps</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">slope_data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">frame_rate</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/aotools/turbulence/temporal_ps.html#plot_tps"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#aotools.turbulence.temporal_ps.plot_tps" title="Link to this definition"></a></dt>
+<dd><p>Generates a plot of the temporal power spectrum/a for a data set of phase gradients</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>slope_data</strong> (<em>ndarray</em>) – 2-d array of shape (…, nFrames, nCentroids)</p></li>
+<li><p><strong>frame_rate</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>) – Frame rate of detector observing slope gradients (Hz)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The computed temporal power spectrum/a, and the time axis data</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.14)">tuple</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<section id="atmospheric-parameter-conversions">
+<span id="module-aotools.turbulence.atmos_conversions"></span><h2>Atmospheric Parameter Conversions<a class="headerlink" href="#atmospheric-parameter-conversions" title="Link to this heading"></a></h2>
+<p>Functions for converting between different atmospheric parameters,</p>
+</section>
+<dl class="py function">
+<dt class="sig sig-object py" id="aotools.turbulence.atmos_conversions.cn2_to_r0">
+<span class="sig-prename descclassname"><span class="pre">aotools.turbulence.atmos_conversions.</span></span><span class="sig-name descname"><span class="pre">cn2_to_r0</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cn2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lamda</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">5e-07</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/aotools/turbulence/atmos_conversions.html#cn2_to_r0"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#aotools.turbulence.atmos_conversions.cn2_to_r0" title="Link to this definition"></a></dt>
+<dd><p>Calculates r0 from the integrated Cn2 value</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>cn2</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>) – integrated Cn2 value in m^2/3</p></li>
+<li><p><strong>lamda</strong> – wavelength</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>r0 in m</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="aotools.turbulence.atmos_conversions.cn2_to_seeing">
+<span class="sig-prename descclassname"><span class="pre">aotools.turbulence.atmos_conversions.</span></span><span class="sig-name descname"><span class="pre">cn2_to_seeing</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cn2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lamda</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">5e-07</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/aotools/turbulence/atmos_conversions.html#cn2_to_seeing"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#aotools.turbulence.atmos_conversions.cn2_to_seeing" title="Link to this definition"></a></dt>
+<dd><p>Calculates the seeing angle from the integrated Cn2 value</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>cn2</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>) – integrated Cn2 value in m^2/3</p></li>
+<li><p><strong>lamda</strong> – wavelength</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>seeing angle in arcseconds</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="aotools.turbulence.atmos_conversions.coherenceTime">
+<span class="sig-prename descclassname"><span class="pre">aotools.turbulence.atmos_conversions.</span></span><span class="sig-name descname"><span class="pre">coherenceTime</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cn2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">v</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lamda</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">5e-07</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">axis</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">-1</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/aotools/turbulence/atmos_conversions.html#coherenceTime"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#aotools.turbulence.atmos_conversions.coherenceTime" title="Link to this definition"></a></dt>
+<dd><p>Calculates the coherence time from profiles of the Cn2 and wind velocity</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>cn2</strong> (<em>array</em>) – Cn2 profile in m^2/3. &gt;1D arrays are supported (i.e. multiple
+profiles), in which case the default assumption is that the turbulent
+layers are along the final (-1) axis.</p></li>
+<li><p><strong>v</strong> (<em>array</em>) – profile of wind velocity, same altitude scale as cn2</p></li>
+<li><p><strong>lamda</strong> – wavelength</p></li>
+<li><p><strong>axis</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a><em>, </em><em>optional</em>) – axis over which to integrate (for &gt;1D inputs)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>coherence time in seconds</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="aotools.turbulence.atmos_conversions.isoplanaticAngle">
+<span class="sig-prename descclassname"><span class="pre">aotools.turbulence.atmos_conversions.</span></span><span class="sig-name descname"><span class="pre">isoplanaticAngle</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cn2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">h</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lamda</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">5e-07</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">axis</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">-1</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/aotools/turbulence/atmos_conversions.html#isoplanaticAngle"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#aotools.turbulence.atmos_conversions.isoplanaticAngle" title="Link to this definition"></a></dt>
+<dd><p>Calculates the isoplanatic angle from the Cn2 profile</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>cn2</strong> (<em>array</em>) – Cn2 profile in m^2/3.  &gt;1D arrays are supported (i.e. multiple
+profiles), in which case the default assumption is that the turbulent
+layers are along the final (-1) axis.</p></li>
+<li><p><strong>h</strong> (<em>Array</em>) – Altitude levels of cn2 profile in m</p></li>
+<li><p><strong>lamda</strong> – wavelength</p></li>
+<li><p><strong>axis</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a><em>, </em><em>optional</em>) – axis over which to integrate (for &gt;1D inputs)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>isoplanatic angle in arcseconds</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="aotools.turbulence.atmos_conversions.r0_from_slopes">
+<span class="sig-prename descclassname"><span class="pre">aotools.turbulence.atmos_conversions.</span></span><span class="sig-name descname"><span class="pre">r0_from_slopes</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">slopes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">wavelength</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">subapDiam</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/aotools/turbulence/atmos_conversions.html#r0_from_slopes"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#aotools.turbulence.atmos_conversions.r0_from_slopes" title="Link to this definition"></a></dt>
+<dd><p>Measures the value of R0 from a set of WFS slopes.</p>
+<p>Uses the equation in Saint Jaques, 1998, PhD Thesis, Appendix A to calculate the value of atmospheric seeing parameter, r0, that would result in the variance of the given slopes.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>slopes</strong> (<em>ndarray</em>) – A 3-d set of slopes in radians, of shape (dimension, nSubaps, nFrames)</p></li>
+<li><p><strong>wavelength</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>) – The wavelegnth of the light observed</p></li>
+<li><p><strong>subapDiam</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>An estimate of r0 for that dataset.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)">float</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="aotools.turbulence.atmos_conversions.r0_to_cn2">
+<span class="sig-prename descclassname"><span class="pre">aotools.turbulence.atmos_conversions.</span></span><span class="sig-name descname"><span class="pre">r0_to_cn2</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">r0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lamda</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">5e-07</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/aotools/turbulence/atmos_conversions.html#r0_to_cn2"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#aotools.turbulence.atmos_conversions.r0_to_cn2" title="Link to this definition"></a></dt>
+<dd><p>Calculates integrated Cn2 value from r0</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>r0</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>) – r0 in m</p></li>
+<li><p><strong>lamda</strong> – wavelength</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>integrated Cn2 value in m^2/3</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>cn2 (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)">float</a>)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="aotools.turbulence.atmos_conversions.r0_to_seeing">
+<span class="sig-prename descclassname"><span class="pre">aotools.turbulence.atmos_conversions.</span></span><span class="sig-name descname"><span class="pre">r0_to_seeing</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">r0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lamda</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">5e-07</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/aotools/turbulence/atmos_conversions.html#r0_to_seeing"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#aotools.turbulence.atmos_conversions.r0_to_seeing" title="Link to this definition"></a></dt>
+<dd><p>Calculates the seeing angle from r0</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>r0</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>) – Freid’s parameter in m</p></li>
+<li><p><strong>lamda</strong> – wavelength</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>seeing angle in arcseconds</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="aotools.turbulence.atmos_conversions.rytov_variance">
+<span class="sig-prename descclassname"><span class="pre">aotools.turbulence.atmos_conversions.</span></span><span class="sig-name descname"><span class="pre">rytov_variance</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cn2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">h</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lamda</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">5e-07</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">axis</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">-1</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/aotools/turbulence/atmos_conversions.html#rytov_variance"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#aotools.turbulence.atmos_conversions.rytov_variance" title="Link to this definition"></a></dt>
+<dd><p>Calculates plane wave Rytov variance from the Cn2 profile</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>cn2</strong> (<em>numpy.ndarray</em>) – Cn2 profile in m^2/3.  &gt;1D arrays are supported (i.e. multiple
+profiles), in which case the default assumption is that the turbulent
+layers are along the final (-1) axis.</p></li>
+<li><p><strong>h</strong> (<em>numpy.ndarray</em>) – Altitude levels of cn2 profile in m</p></li>
+<li><p><strong>lamda</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a><em>, </em><em>optional</em>) – wavelength, default 500 nm</p></li>
+<li><p><strong>axis</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a><em>, </em><em>optional</em>) – axis over which to integrate (for &gt;1D inputs)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Rytov variance (float)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="aotools.turbulence.atmos_conversions.seeing_to_cn2">
+<span class="sig-prename descclassname"><span class="pre">aotools.turbulence.atmos_conversions.</span></span><span class="sig-name descname"><span class="pre">seeing_to_cn2</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">seeing</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lamda</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">5e-07</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/aotools/turbulence/atmos_conversions.html#seeing_to_cn2"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#aotools.turbulence.atmos_conversions.seeing_to_cn2" title="Link to this definition"></a></dt>
+<dd><p>Calculates the integrated Cn2 value from the seeing</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>seeing</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>) – seeing in arcseconds</p></li>
+<li><p><strong>lamda</strong> – wavelength</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>integrated Cn2 value in m^2/3</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="aotools.turbulence.atmos_conversions.seeing_to_r0">
+<span class="sig-prename descclassname"><span class="pre">aotools.turbulence.atmos_conversions.</span></span><span class="sig-name descname"><span class="pre">seeing_to_r0</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">seeing</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lamda</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">5e-07</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/aotools/turbulence/atmos_conversions.html#seeing_to_r0"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#aotools.turbulence.atmos_conversions.seeing_to_r0" title="Link to this definition"></a></dt>
+<dd><p>Calculates r0 from seeing</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>seeing</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>) – seeing angle in arcseconds</p></li>
+<li><p><strong>lamda</strong> – wavelength</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Freid’s parameter in cm</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>r0 (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)">float</a>)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="aotools.turbulence.atmos_conversions.slope_variance_from_r0">
+<span class="sig-prename descclassname"><span class="pre">aotools.turbulence.atmos_conversions.</span></span><span class="sig-name descname"><span class="pre">slope_variance_from_r0</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">r0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">wavelength</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">subapDiam</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/aotools/turbulence/atmos_conversions.html#slope_variance_from_r0"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#aotools.turbulence.atmos_conversions.slope_variance_from_r0" title="Link to this definition"></a></dt>
+<dd><p>Uses the equation in Saint Jaques, 1998, PhD Thesis, Appendix A to calculate the slope variance resulting from a
+value of r0.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>r0</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>) – Fried papamerter of turubulence in metres</p></li>
+<li><p><strong>wavelength</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>) – Wavelength of light in metres (where 1e-9 is 1nm)</p></li>
+<li><p><strong>subapDiam</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>) – Diameter of the aperture in metres</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The expected slope variance for a given r0 ValueError</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="introduction.html" class="btn btn-neutral float-left" title="Introduction" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="image_processing.html" class="btn btn-neutral float-right" title="Image Processing" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2019, The Authors.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

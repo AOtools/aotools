@@ -1,0 +1,213 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>aotools.wfs.wfslib &mdash; AOtools 0.1.dev477+g8f38ff7c1.d20260605 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=fa44fd50" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=867f5289"></script>
+      <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            AOtools
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../turbulence.html">Atmospheric Turbulence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../image_processing.html">Image Processing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../zernike.html">Circular Functions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../pupil.html">Telescope Pupils</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../wfs.html">Wavefront Sensors</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../opticalpropagation.html">Optical Propagation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../astronomy.html">Astronomical Functions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../fft.html">Normalised Fourier Transforms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../interpolation.html">Interpolation</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">AOtools</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">aotools.wfs.wfslib</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for aotools.wfs.wfslib</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">A library of functions which may be of use to analyse WFS data</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span>
+
+
+<div class="viewcode-block" id="findActiveSubaps">
+<a class="viewcode-back" href="../../../wfs.html#aotools.wfs.findActiveSubaps">[docs]</a>
+<span class="k">def</span> <span class="nf">findActiveSubaps</span><span class="p">(</span><span class="n">subaps</span><span class="p">,</span> <span class="n">mask</span><span class="p">,</span> <span class="n">threshold</span><span class="p">,</span> <span class="n">returnFill</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Finds the subapertures which are &quot;seen&quot; be through the</span>
+<span class="sd">    pupil function. Returns the coords of those subapertures</span>
+
+<span class="sd">    Parameters:</span>
+<span class="sd">        subaps (int): The number of subaps in x (assumes square)</span>
+<span class="sd">        mask (ndarray): A pupil mask, where is transparent when 1, and opaque when 0</span>
+<span class="sd">        threshold (float): The mean value across a subap to make it &quot;active&quot;</span>
+<span class="sd">        returnFill (optional, bool): Return an array of fill-factors</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        ndarray: An array of active subap coords</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">subapCoords</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">xSpacing</span> <span class="o">=</span> <span class="n">mask</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">/</span><span class="nb">float</span><span class="p">(</span><span class="n">subaps</span><span class="p">)</span>
+    <span class="n">ySpacing</span> <span class="o">=</span> <span class="n">mask</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">/</span><span class="nb">float</span><span class="p">(</span><span class="n">subaps</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">returnFill</span><span class="p">:</span>
+        <span class="n">fills</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">subaps</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">y</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">subaps</span><span class="p">):</span>
+            <span class="n">subap</span> <span class="o">=</span> <span class="n">mask</span><span class="p">[</span>
+                    <span class="nb">int</span><span class="p">(</span><span class="n">numpy</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">x</span><span class="o">*</span><span class="n">xSpacing</span><span class="p">)):</span> <span class="nb">int</span><span class="p">(</span><span class="n">numpy</span><span class="o">.</span><span class="n">round</span><span class="p">((</span><span class="n">x</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span><span class="o">*</span><span class="n">xSpacing</span><span class="p">)),</span>
+                    <span class="nb">int</span><span class="p">(</span><span class="n">numpy</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">y</span><span class="o">*</span><span class="n">ySpacing</span><span class="p">)):</span> <span class="nb">int</span><span class="p">(</span><span class="n">numpy</span><span class="o">.</span><span class="n">round</span><span class="p">((</span><span class="n">y</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span><span class="o">*</span><span class="n">ySpacing</span><span class="p">))</span>
+                    <span class="p">]</span>
+
+            <span class="k">if</span> <span class="n">subap</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span> <span class="o">&gt;=</span> <span class="n">threshold</span><span class="p">:</span>
+                <span class="n">subapCoords</span><span class="o">.</span><span class="n">append</span><span class="p">(</span> <span class="p">[</span><span class="n">x</span><span class="o">*</span><span class="n">xSpacing</span><span class="p">,</span> <span class="n">y</span><span class="o">*</span><span class="n">ySpacing</span><span class="p">])</span>
+                <span class="k">if</span> <span class="n">returnFill</span><span class="p">:</span>
+                    <span class="n">fills</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">subap</span><span class="o">.</span><span class="n">mean</span><span class="p">())</span>
+
+    <span class="n">subapCoords</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">array</span><span class="p">(</span> <span class="n">subapCoords</span> <span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">returnFill</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">subapCoords</span><span class="p">,</span> <span class="n">numpy</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">fills</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">subapCoords</span></div>
+
+
+
+<div class="viewcode-block" id="computeFillFactor">
+<a class="viewcode-back" href="../../../wfs.html#aotools.wfs.computeFillFactor">[docs]</a>
+<span class="k">def</span> <span class="nf">computeFillFactor</span><span class="p">(</span><span class="n">mask</span><span class="p">,</span> <span class="n">subapPos</span><span class="p">,</span> <span class="n">subapSpacing</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Calculate the fill factor of a set of sub-aperture co-ordinates with a given</span>
+<span class="sd">    pupil mask.</span>
+
+<span class="sd">    Parameters:</span>
+<span class="sd">        mask (ndarray): Pupil mask</span>
+<span class="sd">        subapPos (ndarray): Set of n sub-aperture co-ordinates (n, 2)</span>
+<span class="sd">        subapSpacing: Number of mask pixels between sub-apertures</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        list: fill factor of sub-apertures</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">fills</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">subapPos</span><span class="p">))</span>
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">subapPos</span><span class="p">):</span>
+        <span class="n">x1</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="n">x</span><span class="p">))</span>
+        <span class="n">x2</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="n">x</span> <span class="o">+</span> <span class="n">subapSpacing</span><span class="p">))</span>
+        <span class="n">y1</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="n">y</span><span class="p">))</span>
+        <span class="n">y2</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="n">y</span> <span class="o">+</span> <span class="n">subapSpacing</span><span class="p">))</span>
+        <span class="n">fills</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">mask</span><span class="p">[</span><span class="n">x1</span><span class="p">:</span><span class="n">x2</span><span class="p">,</span> <span class="n">y1</span><span class="p">:</span><span class="n">y2</span><span class="p">]</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+
+    <span class="k">return</span> <span class="n">fills</span></div>
+
+
+<div class="viewcode-block" id="make_subaps_2d">
+<a class="viewcode-back" href="../../../wfs.html#aotools.wfs.make_subaps_2d">[docs]</a>
+<span class="k">def</span> <span class="nf">make_subaps_2d</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">mask</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Fills in a pupil shape with 2-d sub-apertures</span>
+
+<span class="sd">    Parameters:</span>
+<span class="sd">        data (ndarray): slope data, of shape, (frames, 2, nSubaps)</span>
+<span class="sd">        mask (ndarray): 2-d array of shape (nxSubaps, nxSubaps), where 1 indicates a valid subap position and 0 a masked subap </span>
+<span class="sd">    &quot;&quot;&quot;</span> 
+    <span class="n">n_frames</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">n_subaps</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">nx_subaps</span> <span class="o">=</span> <span class="n">mask</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+    <span class="n">subaps_2d</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="mi">2</span><span class="p">,</span> <span class="n">mask</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">mask</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">data</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
+
+    <span class="n">n_subap</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nx_subaps</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">y</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nx_subaps</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">mask</span><span class="p">[</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">]</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="n">subaps_2d</span><span class="p">[:,</span> <span class="p">:,</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">]</span> <span class="o">=</span> <span class="n">data</span><span class="p">[:,</span> <span class="p">:,</span> <span class="n">n_subap</span><span class="p">]</span>
+                <span class="n">n_subap</span> <span class="o">+=</span> <span class="mi">1</span>
+
+    <span class="k">return</span> <span class="n">subaps_2d</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2019, The Authors.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

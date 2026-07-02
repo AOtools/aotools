@@ -1,0 +1,814 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>aotools.functions.karhunenLoeve &mdash; AOtools 0.1.dev477+g8f38ff7c1.d20260605 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=fa44fd50" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=867f5289"></script>
+      <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            AOtools
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../turbulence.html">Atmospheric Turbulence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../image_processing.html">Image Processing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../zernike.html">Circular Functions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../pupil.html">Telescope Pupils</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../wfs.html">Wavefront Sensors</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../opticalpropagation.html">Optical Propagation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../astronomy.html">Astronomical Functions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../fft.html">Normalised Fourier Transforms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../interpolation.html">Interpolation</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">AOtools</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">aotools.functions.karhunenLoeve</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for aotools.functions.karhunenLoeve</h1><div class="highlight"><pre>
+<span></span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">Collection of routines related to Karhunen-Loeve modes.</span>
+
+<span class="sd">The theory is based on the paper</span>
+<span class="sd">&quot;Optimal bases for wave-front simulation and</span>
+<span class="sd">reconstruction on annular apertures&quot;, Robert C. Cannon, 1996, JOSAA, 13, 4</span>
+
+<span class="sd">The present implementation is based on the IDL package of R. Cannon</span>
+<span class="sd">(wavefront modelling and reconstruction).</span>
+<span class="sd">A closely similar implementation can also be find in Yorick in the YAO package.</span>
+
+<span class="sd">Usage</span>
+<span class="sd">-----</span>
+<span class="sd">Main routine is &#39;make_kl&#39; to generate KL basis of dimension ``[dim, dim, nmax]``.</span>
+
+<span class="sd">For Kolmogorov statistics, e.g. ::</span>
+
+<span class="sd">    kl, _, _, _ = make_kl(150, 128, ri = 0.2, stf=&#39;kolmogorov&#39;)</span>
+
+<span class="sd">.. warning::</span>
+
+<span class="sd">    make_kl with von Karman stf fails. It has been implemented but KL generation failed in &#39;while loop&#39; of gkl_fcom...</span>
+
+<span class="sd">.. codeauthor:: Gilles Orban de Xivry (ULieve)</span>
+<span class="sd">:date: November 2017</span>
+<span class="sd">&#39;&#39;&#39;</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">scipy</span>
+<span class="kn">from</span> <span class="nn">scipy.ndimage</span> <span class="kn">import</span> <span class="n">map_coordinates</span>
+
+
+<div class="viewcode-block" id="rebin">
+<a class="viewcode-back" href="../../../zernike.html#aotools.functions.karhunenLoeve.rebin">[docs]</a>
+<span class="k">def</span> <span class="nf">rebin</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">newshape</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;Rebin an array to a new shape.</span>
+<span class="sd">    See scipy cookbook.</span>
+<span class="sd">    It is intended to be similar to &#39;rebin&#39; of IDL</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">a</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">newshape</span><span class="p">)</span>
+
+    <span class="n">slices</span> <span class="o">=</span> <span class="p">[</span><span class="nb">slice</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">old</span><span class="p">,</span> <span class="nb">float</span><span class="p">(</span><span class="n">old</span><span class="p">)</span> <span class="o">/</span> <span class="n">new</span><span class="p">)</span>
+              <span class="k">for</span> <span class="n">old</span><span class="p">,</span> <span class="n">new</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">a</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">newshape</span><span class="p">)]</span>
+    <span class="n">coordinates</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mgrid</span><span class="p">[</span><span class="n">slices</span><span class="p">]</span>
+    <span class="c1"># choose the biggest smaller integer index</span>
+    <span class="n">indices</span> <span class="o">=</span> <span class="n">coordinates</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="s1">&#39;i&#39;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">a</span><span class="p">[</span><span class="nb">tuple</span><span class="p">(</span><span class="n">indices</span><span class="p">)]</span></div>
+
+
+
+<div class="viewcode-block" id="stf_kolmogorov">
+<a class="viewcode-back" href="../../../zernike.html#aotools.functions.karhunenLoeve.stf_kolmogorov">[docs]</a>
+<span class="k">def</span> <span class="nf">stf_kolmogorov</span><span class="p">(</span><span class="n">r</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Kolmogorov structure function with r = (D/r0)</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="k">return</span> <span class="mf">6.8839</span> <span class="o">*</span> <span class="n">r</span><span class="o">**</span><span class="p">(</span><span class="mf">5.</span> <span class="o">/</span> <span class="mi">3</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="stf_vonKarman_yao">
+<a class="viewcode-back" href="../../../zernike.html#aotools.functions.karhunenLoeve.stf_vonKarman_yao">[docs]</a>
+<span class="k">def</span> <span class="nf">stf_vonKarman_yao</span><span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="n">L</span><span class="p">):</span>
+    <span class="k">return</span> <span class="mf">6.88</span> <span class="o">*</span> <span class="n">r</span><span class="o">**</span><span class="p">(</span><span class="mf">5.</span> <span class="o">/</span> <span class="mi">3</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="mf">1.485</span> <span class="o">*</span> <span class="p">(</span><span class="n">r</span> <span class="o">/</span> <span class="n">L</span><span class="p">)</span><span class="o">**</span><span class="p">(</span><span class="mi">1</span> <span class="o">/</span> <span class="mf">3.</span><span class="p">)</span> <span class="o">+</span>
+                                 <span class="mf">5.383</span> <span class="o">*</span> <span class="p">(</span><span class="n">r</span> <span class="o">/</span> <span class="n">L</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span> <span class="o">-</span>
+                                 <span class="mf">6.281</span> <span class="o">*</span> <span class="p">(</span><span class="n">r</span> <span class="o">/</span> <span class="n">L</span><span class="p">)</span><span class="o">**</span><span class="p">(</span><span class="mi">7</span> <span class="o">/</span> <span class="mf">3.</span><span class="p">))</span></div>
+
+
+
+<div class="viewcode-block" id="stf_vonKarman">
+<a class="viewcode-back" href="../../../zernike.html#aotools.functions.karhunenLoeve.stf_vonKarman">[docs]</a>
+<span class="k">def</span> <span class="nf">stf_vonKarman</span><span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="n">L0</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        von Karman structure function with r = (D / r0)</span>
+<span class="sd">        L0 is in unit of telescope diameter, typically a few (3; or 20m)</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="n">r0</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="n">D_vk</span> <span class="o">=</span> <span class="p">(</span><span class="mf">0.17253</span> <span class="o">*</span> <span class="p">(</span><span class="n">L0</span> <span class="o">/</span> <span class="p">(</span><span class="n">r0</span><span class="p">))</span> <span class="o">**</span> <span class="p">(</span><span class="mf">5.</span> <span class="o">/</span> <span class="mf">3.</span><span class="p">)</span>
+            <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">**</span> <span class="p">(</span><span class="mf">5.</span> <span class="o">/</span> <span class="mf">6.</span><span class="p">)</span> <span class="o">*</span> <span class="p">((</span><span class="n">r</span><span class="p">)</span> <span class="o">/</span> <span class="n">L0</span><span class="p">)</span> <span class="o">**</span> <span class="p">(</span><span class="mf">5.</span> <span class="o">/</span> <span class="mf">6.</span><span class="p">)</span>
+               <span class="o">/</span> <span class="n">scipy</span><span class="o">.</span><span class="n">special</span><span class="o">.</span><span class="n">gamma</span><span class="p">(</span><span class="mf">5.</span> <span class="o">/</span> <span class="mf">6.</span><span class="p">)</span>
+               <span class="o">*</span> <span class="n">scipy</span><span class="o">.</span><span class="n">special</span><span class="o">.</span><span class="n">kv</span><span class="p">(</span><span class="mf">5.</span> <span class="o">/</span> <span class="mf">6.</span><span class="p">,</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="n">r</span><span class="p">)</span> <span class="o">/</span> <span class="n">L0</span><span class="p">)))</span>
+    <span class="k">return</span> <span class="n">D_vk</span></div>
+
+
+
+<div class="viewcode-block" id="gkl_radii">
+<a class="viewcode-back" href="../../../zernike.html#aotools.functions.karhunenLoeve.gkl_radii">[docs]</a>
+<span class="k">def</span> <span class="nf">gkl_radii</span><span class="p">(</span><span class="n">ri</span><span class="p">,</span> <span class="n">nr</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Generate n points evenly spaced in r^2 between r_i^2 and 1</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    -----------</span>
+<span class="sd">        nr : int</span>
+<span class="sd">            number of resolution elements</span>
+<span class="sd">        ri : float</span>
+<span class="sd">            radius of central obscuration radius (normalized; &lt;1)</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">        r: 1d-array, float</span>
+<span class="sd">            grid of point to calculate the appropriate kernels.</span>
+<span class="sd">            correspond to &#39;sqrt(s)&#39; wrt the paper.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="n">d</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">ri</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span> <span class="o">/</span> <span class="n">nr</span>
+    <span class="c1"># r2 = ri**2 + d / 2. + d * np.arange(nr)</span>
+    <span class="n">r2</span> <span class="o">=</span> <span class="n">ri</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="n">d</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">nr</span><span class="p">)</span> <span class="o">+</span> <span class="n">d</span> <span class="o">/</span> <span class="mi">16</span>
+
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">r2</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="gkl_kernel">
+<a class="viewcode-back" href="../../../zernike.html#aotools.functions.karhunenLoeve.gkl_kernel">[docs]</a>
+<span class="k">def</span> <span class="nf">gkl_kernel</span><span class="p">(</span><span class="n">ri</span><span class="p">,</span> <span class="n">nr</span><span class="p">,</span> <span class="n">rad</span><span class="p">,</span> <span class="n">stfunc</span><span class="o">=</span><span class="s1">&#39;kolmogorov&#39;</span><span class="p">,</span> <span class="n">outerscale</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Calculation of the kernel L^p</span>
+
+<span class="sd">    The kernel constructed here should be simply a discretization</span>
+<span class="sd">    of the continuous kernel.</span>
+<span class="sd">    It needs rescaling before it is treated as a matrix for finding</span>
+<span class="sd">    the eigen-values</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">        ri : float</span>
+<span class="sd">            radius of central obscuration radius (normalized by D/2; &lt;1)</span>
+<span class="sd">        nr : int</span>
+<span class="sd">            number of resolution elements</span>
+<span class="sd">        rad : 1d-array</span>
+<span class="sd">            grid of points where the kernel is evaluated</span>
+<span class="sd">        stfunc : string</span>
+<span class="sd">            string tag of the structure function on which the kernel are</span>
+<span class="sd">            computed</span>
+<span class="sd">        outerscale : float</span>
+<span class="sd">            in unit of telescope diameter.</span>
+<span class="sd">            Outer-scale for von Karman structure function.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">        L^p : ndarray</span>
+<span class="sd">            kernel L^p of dimension (nr, nr, nth), where nth is the</span>
+<span class="sd">            azimuthal discretization (5 * nr)</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="n">oversampling</span> <span class="o">=</span> <span class="mi">5</span>
+    <span class="c1"># ovsersampling for fourier calculation</span>
+    <span class="n">nth</span> <span class="o">=</span> <span class="n">oversampling</span> <span class="o">*</span> <span class="n">nr</span>
+    <span class="n">kernel</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">nr</span><span class="p">,</span> <span class="n">nr</span><span class="p">,</span> <span class="n">nth</span><span class="p">))</span>
+
+    <span class="c1"># 1/2 because Lp and not Kp</span>
+    <span class="n">fnorm</span> <span class="o">=</span> <span class="mf">1.</span> <span class="o">/</span> <span class="mf">2.</span> <span class="o">*</span> <span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">ri</span><span class="o">**</span><span class="mi">2</span><span class="p">))</span>
+
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nr</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
+            <span class="n">radius</span> <span class="o">=</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">rad</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="n">rad</span><span class="p">[</span><span class="n">j</span><span class="p">]</span><span class="o">**</span><span class="mi">2</span> <span class="o">-</span>
+                                   <span class="mi">2</span> <span class="o">*</span> <span class="n">rad</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">*</span> <span class="n">rad</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">*</span>
+                                   <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">nth</span><span class="p">)</span> <span class="o">*</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">/</span> <span class="n">nth</span><span class="p">))</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">stfunc</span> <span class="o">==</span> <span class="s1">&#39;kolmogorov&#39;</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span><span class="n">stfunc</span> <span class="o">==</span> <span class="s1">&#39;kolstf&#39;</span><span class="p">):</span>
+                <span class="n">sf</span> <span class="o">=</span> <span class="n">stf_kolmogorov</span><span class="p">(</span><span class="n">radius</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="p">(</span><span class="n">stfunc</span> <span class="o">==</span> <span class="s1">&#39;vonKarman&#39;</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span><span class="n">stfunc</span> <span class="o">==</span> <span class="s1">&#39;karman&#39;</span><span class="p">)</span> <span class="ow">or</span> \
+                    <span class="p">(</span><span class="n">stfunc</span> <span class="o">==</span> <span class="s1">&#39;vk&#39;</span><span class="p">):</span>
+                <span class="k">assert</span> <span class="n">outerscale</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+                <span class="n">sf</span> <span class="o">=</span> <span class="n">stf_vonKarman</span><span class="p">(</span><span class="n">radius</span><span class="p">,</span> <span class="n">outerscale</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">AttributeError</span><span class="p">(</span><span class="s2">&quot;Structure function not implemented&quot;</span><span class="p">)</span>
+
+            <span class="c1"># tmp = fnorm * (2 * np.pi / nth) * (fft.ifft(sf) + fft.fft(sf)) / 2</span>
+            <span class="c1"># fft.dct(sf, type=3) # fft.ifft(sf) # ift(sf, 1)</span>
+            <span class="n">tmp</span> <span class="o">=</span> <span class="n">fnorm</span> <span class="o">*</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">/</span> <span class="n">nth</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">fft</span><span class="o">.</span><span class="n">fft</span><span class="p">(</span><span class="n">sf</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+
+            <span class="c1"># Kernel is symmetric</span>
+            <span class="n">kernel</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">tmp</span>
+            <span class="n">kernel</span><span class="p">[</span><span class="n">j</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">tmp</span>
+
+    <span class="k">return</span> <span class="n">kernel</span></div>
+
+
+
+<div class="viewcode-block" id="piston_orth">
+<a class="viewcode-back" href="../../../zernike.html#aotools.functions.karhunenLoeve.piston_orth">[docs]</a>
+<span class="k">def</span> <span class="nf">piston_orth</span><span class="p">(</span><span class="n">nr</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Unitary matrix used to filter out piston term.</span>
+<span class="sd">    Eq. 19 in Cannon 1996.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    nr : int</span>
+<span class="sd">        number of resolution elements</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    U : 2d array</span>
+<span class="sd">        Unitary matrix</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+
+    <span class="n">s</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">nr</span><span class="p">,</span> <span class="n">nr</span><span class="p">))</span>
+    <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nr</span> <span class="o">-</span> <span class="mi">1</span><span class="p">):</span>
+        <span class="n">rnm</span> <span class="o">=</span> <span class="mf">1.</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">((</span><span class="n">j</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">j</span> <span class="o">+</span> <span class="mi">2</span><span class="p">))</span>
+        <span class="n">s</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="n">j</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">rnm</span>
+        <span class="n">s</span><span class="p">[</span><span class="n">j</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">j</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">rnm</span>
+    <span class="n">rnm</span> <span class="o">=</span> <span class="mf">1.</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">nr</span><span class="p">)</span>
+    <span class="n">s</span><span class="p">[:,</span> <span class="n">nr</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">rnm</span>
+    <span class="k">return</span> <span class="n">s</span></div>
+
+
+
+<div class="viewcode-block" id="gkl_fcom">
+<a class="viewcode-back" href="../../../zernike.html#aotools.functions.karhunenLoeve.gkl_fcom">[docs]</a>
+<span class="k">def</span> <span class="nf">gkl_fcom</span><span class="p">(</span><span class="n">ri</span><span class="p">,</span> <span class="n">kernels</span><span class="p">,</span> <span class="n">nfunc</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Computation of the radial eigenvectors of the KL basis.</span>
+
+<span class="sd">    Obtained by taking the eigenvectors from the matrix L^p.</span>
+<span class="sd">    The final function corresponds to the &#39;nfunc&#39; largest eigenvalues.</span>
+<span class="sd">    See eq. 16-18 in Cannon 1996.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">        ri : float</span>
+<span class="sd">            radius of central obscuration radius (normalized by D/2; &lt;1)</span>
+<span class="sd">        kernels : ndarray</span>
+<span class="sd">            kernel L^p of dimension (nr, nr, nth), where nth is the</span>
+<span class="sd">            azimuthal discretization (5 * nr)</span>
+<span class="sd">        nfunc : int</span>
+<span class="sd">            number of final KL functions</span>
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">        evals : 1darray</span>
+<span class="sd">            eigenvalues</span>
+<span class="sd">        nord : int</span>
+<span class="sd">            resulting number of azimuthal orders</span>
+<span class="sd">        npo : int</span>
+<span class="sd">        ord : 1darray</span>
+<span class="sd">        rabas : ndarray</span>
+<span class="sd">            radial eigenvectors of the KL basis</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="n">kers</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="n">kernels</span><span class="p">)</span>
+    <span class="n">s</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">shape</span><span class="p">(</span><span class="n">kers</span><span class="p">)</span>
+    <span class="n">nr</span> <span class="o">=</span> <span class="n">s</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">nt</span> <span class="o">=</span> <span class="n">s</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
+    <span class="n">nxt</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">fktom</span> <span class="o">=</span> <span class="p">(</span><span class="mf">1.</span> <span class="o">-</span> <span class="n">ri</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span> <span class="o">/</span> <span class="n">nr</span>
+    <span class="n">fevtos</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">nr</span><span class="p">)</span>
+    <span class="n">evs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">((</span><span class="n">nr</span><span class="p">,</span> <span class="n">nt</span><span class="p">))</span>
+
+    <span class="c1"># * Zero-order is a special case *</span>
+    <span class="c1"># see eq 19 and 20 of Cannon&#39;s paper</span>
+    <span class="n">zom</span> <span class="o">=</span> <span class="n">kers</span><span class="p">[:,</span> <span class="p">:,</span> <span class="mi">0</span><span class="p">]</span>
+    <span class="n">s</span> <span class="o">=</span> <span class="n">piston_orth</span><span class="p">(</span><span class="n">nr</span><span class="p">)</span><span class="o">.</span><span class="n">T</span>
+    <span class="c1"># b1 = np.dot(np.dot(s.T, zom), s)[0:nr - 1, 0:nr - 1]</span>
+    <span class="c1"># b1 = (np.inner(s, np.inner(zom, s).T))[0:nr - 1, 0:nr - 1]</span>
+    <span class="n">b1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">zom</span><span class="p">),</span> <span class="n">s</span><span class="o">.</span><span class="n">T</span><span class="p">)[</span><span class="mi">0</span><span class="p">:</span><span class="n">nr</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">:</span><span class="n">nr</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span>
+
+    <span class="c1"># since matrix is symmetric, can use eigh instead of svd.</span>
+    <span class="c1"># should not make any difference however...</span>
+    <span class="n">newev</span><span class="p">,</span> <span class="n">v0</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">eigh</span><span class="p">(</span><span class="n">fktom</span> <span class="o">*</span> <span class="n">b1</span><span class="p">)</span>
+    <span class="n">v1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">nr</span><span class="p">,</span> <span class="n">nr</span><span class="p">))</span>
+    <span class="n">v1</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="n">nr</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">:</span><span class="n">nr</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">v0</span><span class="o">.</span><span class="n">T</span>
+    <span class="c1"># v1[nr - 1, nr - 1] = 1.0</span>
+    <span class="n">v1</span><span class="p">[</span><span class="n">nr</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="n">nr</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1.0</span>
+    <span class="n">vs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">v1</span><span class="p">,</span> <span class="n">s</span><span class="p">)</span>
+    <span class="n">newev</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">newev</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+    <span class="n">evs</span><span class="p">[:,</span> <span class="n">nxt</span><span class="p">]</span> <span class="o">=</span> <span class="n">newev</span>
+    <span class="n">kers</span><span class="p">[:,</span> <span class="p">:,</span> <span class="n">nxt</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">nr</span><span class="p">)</span> <span class="o">*</span> <span class="n">vs</span><span class="o">.</span><span class="n">T</span>
+
+    <span class="c1"># * Other orders - more straightforward</span>
+    <span class="n">nxt</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+        <span class="n">newev</span><span class="p">,</span> <span class="n">vs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">eigh</span><span class="p">(</span><span class="n">fktom</span> <span class="o">*</span> <span class="n">kers</span><span class="p">[:,</span> <span class="p">:,</span> <span class="n">nxt</span><span class="p">])</span>
+        <span class="n">evs</span><span class="p">[:,</span> <span class="n">nxt</span><span class="p">]</span> <span class="o">=</span> <span class="n">newev</span>
+        <span class="c1"># kers[:, :, nxt] = np.sqrt(2 * nr) * vs</span>
+        <span class="n">kers</span><span class="p">[:,</span> <span class="p">:,</span> <span class="n">nxt</span><span class="p">]</span> <span class="o">=</span> <span class="n">fevtos</span> <span class="o">*</span> <span class="n">vs</span>
+        <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">{0:.4f}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">nxt</span><span class="p">))</span>
+        <span class="n">mxn</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">newev</span><span class="p">)</span>
+        <span class="n">egtmxn</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">floor</span><span class="p">(</span><span class="n">evs</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">:</span><span class="n">nxt</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span> <span class="o">&gt;</span> <span class="n">mxn</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="s1">&#39;int&#39;</span><span class="p">)</span>
+        <span class="n">nxt</span> <span class="o">=</span> <span class="n">nxt</span> <span class="o">+</span> <span class="mi">1</span>
+        <span class="k">if</span> <span class="p">((</span><span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">egtmxn</span><span class="p">)</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">egtmxn</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]))</span> <span class="o">&gt;=</span> <span class="n">nfunc</span><span class="p">):</span>
+            <span class="k">break</span>
+    <span class="n">nus</span> <span class="o">=</span> <span class="n">nxt</span> <span class="o">-</span> <span class="mi">1</span>
+
+    <span class="c1"># * The rest is about sorting and selecting the N functions with the</span>
+    <span class="c1"># highest eigenvalues *</span>
+    <span class="n">kers</span> <span class="o">=</span> <span class="n">kers</span><span class="p">[:,</span> <span class="p">:,</span> <span class="mi">0</span><span class="p">:</span><span class="n">nus</span><span class="p">]</span>
+    <span class="n">evs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">evs</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">:</span><span class="n">nus</span><span class="p">]</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="n">nr</span> <span class="o">*</span> <span class="n">nus</span><span class="p">)</span>
+    <span class="n">a</span> <span class="o">=</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">argsort</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span> <span class="o">*</span> <span class="n">evs</span><span class="p">))[</span><span class="mi">0</span><span class="p">:</span><span class="n">nfunc</span><span class="p">]</span>
+
+    <span class="c1"># every eigenvalue occurs twice except those for the zeroth order mode.</span>
+    <span class="c1"># this could be done without the loops,</span>
+    <span class="c1"># but it isn&#39;t the sticking point anyway...</span>
+    <span class="n">no</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">ni</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="c1"># oind = np.empty(nfunc + 1)</span>
+    <span class="n">oind</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">nfunc</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="s1">&#39;int&#39;</span><span class="p">)</span>
+    <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">a</span><span class="p">[</span><span class="n">ni</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">nr</span><span class="p">):</span>
+            <span class="n">oind</span><span class="p">[</span><span class="n">no</span><span class="p">]</span> <span class="o">=</span> <span class="n">a</span><span class="p">[</span><span class="n">ni</span><span class="p">]</span>
+            <span class="n">no</span> <span class="o">=</span> <span class="n">no</span> <span class="o">+</span> <span class="mi">1</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">oind</span><span class="p">[</span><span class="n">no</span><span class="p">]</span> <span class="o">=</span> <span class="n">a</span><span class="p">[</span><span class="n">ni</span><span class="p">]</span>
+            <span class="n">oind</span><span class="p">[</span><span class="n">no</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">a</span><span class="p">[</span><span class="n">ni</span><span class="p">]</span>
+            <span class="n">no</span> <span class="o">=</span> <span class="n">no</span> <span class="o">+</span> <span class="mi">2</span>
+        <span class="n">ni</span> <span class="o">=</span> <span class="n">ni</span> <span class="o">+</span> <span class="mi">1</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">no</span> <span class="o">&gt;=</span> <span class="n">nfunc</span><span class="p">):</span>
+            <span class="k">break</span>
+
+    <span class="n">oind</span> <span class="o">=</span> <span class="n">oind</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="n">nfunc</span><span class="p">]</span>
+    <span class="n">tord</span> <span class="o">=</span> <span class="n">oind</span> <span class="o">//</span> <span class="n">nr</span>
+    <span class="n">odd</span> <span class="o">=</span> <span class="p">((</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">nfunc</span><span class="p">)</span> <span class="o">%</span> <span class="mi">2</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="n">pio</span> <span class="o">=</span> <span class="n">oind</span> <span class="o">%</span> <span class="n">nr</span>
+
+    <span class="n">evals</span> <span class="o">=</span> <span class="n">evs</span><span class="p">[</span><span class="n">oind</span><span class="p">]</span>
+    <span class="n">oord</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">tord</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">floor</span><span class="p">((</span><span class="n">tord</span> <span class="o">&gt;=</span> <span class="mi">1</span><span class="p">)</span> <span class="o">&amp;</span> <span class="n">odd</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="s1">&#39;int&#39;</span><span class="p">)</span>
+    <span class="n">nord</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">oord</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span>
+    <span class="n">rabas</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">nr</span><span class="p">,</span> <span class="n">nfunc</span><span class="p">))</span>
+    <span class="n">npo</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">oord</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nfunc</span><span class="p">):</span>
+        <span class="n">npo</span><span class="p">[</span><span class="n">oord</span><span class="p">[</span><span class="n">i</span><span class="p">]]</span> <span class="o">=</span> <span class="n">npo</span><span class="p">[</span><span class="n">oord</span><span class="p">[</span><span class="n">i</span><span class="p">]]</span> <span class="o">+</span> <span class="mi">1</span>
+        <span class="n">rabas</span><span class="p">[:,</span> <span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">kers</span><span class="p">[:,</span> <span class="n">pio</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">tord</span><span class="p">[</span><span class="n">i</span><span class="p">]]</span>
+
+    <span class="k">return</span> <span class="n">evals</span><span class="p">,</span> <span class="n">nord</span><span class="p">,</span> <span class="n">npo</span><span class="p">,</span> <span class="n">oord</span><span class="p">,</span> <span class="n">rabas</span></div>
+
+
+
+<div class="viewcode-block" id="gkl_azimuthal">
+<a class="viewcode-back" href="../../../zernike.html#aotools.functions.karhunenLoeve.gkl_azimuthal">[docs]</a>
+<span class="k">def</span> <span class="nf">gkl_azimuthal</span><span class="p">(</span><span class="n">nord</span><span class="p">,</span> <span class="n">npp</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Compute the azimuthal function of the KL basis.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">        nord : int</span>
+<span class="sd">            number of azimuthal orders</span>
+<span class="sd">        npp : int</span>
+<span class="sd">            grid of point sampling the azimuthal coordinate</span>
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">        gklazi: ndarray</span>
+<span class="sd">            azimuthal function of the KL basis.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="n">gklazi</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">1</span> <span class="o">+</span> <span class="n">nord</span><span class="p">,</span> <span class="n">npp</span><span class="p">))</span>
+    <span class="n">theta</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">npp</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">/</span> <span class="n">npp</span><span class="p">)</span>
+    <span class="n">gklazi</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="mf">1.0</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">nord</span><span class="p">,</span> <span class="mi">2</span><span class="p">):</span>
+        <span class="c1"># even</span>
+        <span class="n">gklazi</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">((</span><span class="n">i</span> <span class="o">//</span> <span class="mi">2</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">theta</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="n">nord</span><span class="p">,</span> <span class="mi">2</span><span class="p">):</span>
+        <span class="c1"># odd</span>
+        <span class="n">gklazi</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">((</span><span class="n">i</span> <span class="o">//</span> <span class="mi">2</span><span class="p">)</span> <span class="o">*</span> <span class="n">theta</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">gklazi</span></div>
+
+
+
+<div class="viewcode-block" id="gkl_basis">
+<a class="viewcode-back" href="../../../zernike.html#aotools.functions.karhunenLoeve.gkl_basis">[docs]</a>
+<span class="k">def</span> <span class="nf">gkl_basis</span><span class="p">(</span><span class="n">ri</span><span class="o">=</span><span class="mf">0.25</span><span class="p">,</span> <span class="n">nr</span><span class="o">=</span><span class="mi">40</span><span class="p">,</span> <span class="n">npp</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">nfunc</span><span class="o">=</span><span class="mi">500</span><span class="p">,</span>
+              <span class="n">stf</span><span class="o">=</span><span class="s1">&#39;kolstf&#39;</span><span class="p">,</span> <span class="n">outerscale</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Wrapper to create the radial and azimuthal K-L functions.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">        ri : float</span>
+<span class="sd">            normalized internal radius</span>
+<span class="sd">        nr : int</span>
+<span class="sd">            number of radial resolution elements</span>
+<span class="sd">        np : int</span>
+<span class="sd">            number of azimuthal resolution elements</span>
+<span class="sd">        nfunc : int</span>
+<span class="sd">            number of generated K-L function</span>
+<span class="sd">        stf : string</span>
+<span class="sd">            structure function tag describing the atmospheric statistics</span>
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">        gklbasis: dic</span>
+<span class="sd">            dictionary containing the radial and azimuthal basis + other</span>
+<span class="sd">            relevant information</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="k">if</span> <span class="n">npp</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">npp</span> <span class="o">=</span> <span class="mi">5</span> <span class="o">*</span> <span class="n">nr</span>
+
+    <span class="k">if</span> <span class="p">(</span><span class="n">nr</span> <span class="o">*</span> <span class="n">npp</span><span class="p">)</span> <span class="o">/</span> <span class="n">nfunc</span> <span class="o">&lt;</span> <span class="mi">8</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;warning: you may need a finer radial sampling &quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;(ie, increased &#39;nr&#39;) to generate </span><span class="si">{0:1.0f}</span><span class="s2"> &quot;</span>
+              <span class="s2">&quot;functions&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">nfunc</span><span class="p">))</span>
+    <span class="k">elif</span> <span class="p">(</span><span class="n">nr</span> <span class="o">*</span> <span class="n">npp</span><span class="p">)</span> <span class="o">/</span> <span class="n">nfunc</span> <span class="o">&gt;</span> <span class="mi">40</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;note, for this size basis, radial discretization on &quot;</span><span class="p">,</span> <span class="n">nr</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;points is finer than necessary - it should work, but you &quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;could take a smaller &#39;nr&#39; without loss of accuracy&quot;</span><span class="p">)</span>
+
+    <span class="n">rad_basis</span> <span class="o">=</span> <span class="n">gkl_radii</span><span class="p">(</span><span class="n">ri</span><span class="p">,</span> <span class="n">nr</span><span class="p">)</span>
+
+    <span class="n">kers</span> <span class="o">=</span> <span class="n">gkl_kernel</span><span class="p">(</span><span class="n">ri</span><span class="p">,</span> <span class="n">nr</span><span class="p">,</span> <span class="n">rad_basis</span><span class="p">,</span> <span class="n">stf</span><span class="p">,</span> <span class="n">outerscale</span><span class="p">)</span>
+
+    <span class="n">evals</span><span class="p">,</span> <span class="n">nord</span><span class="p">,</span> <span class="n">npo</span><span class="p">,</span> <span class="n">oord</span><span class="p">,</span> <span class="n">rabas</span> <span class="o">=</span> <span class="n">gkl_fcom</span><span class="p">(</span><span class="n">ri</span><span class="p">,</span> <span class="n">kers</span><span class="p">,</span> <span class="n">nfunc</span><span class="p">)</span>
+
+    <span class="n">azi_basis</span> <span class="o">=</span> <span class="n">gkl_azimuthal</span><span class="p">(</span><span class="n">nord</span><span class="p">,</span> <span class="n">npp</span><span class="p">)</span>
+
+    <span class="n">gklbasis</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;nr&#39;</span><span class="p">:</span> <span class="n">nr</span><span class="p">,</span> <span class="s1">&#39;np&#39;</span><span class="p">:</span> <span class="n">npp</span><span class="p">,</span> <span class="s1">&#39;nfunc&#39;</span><span class="p">:</span> <span class="n">nfunc</span><span class="p">,</span> <span class="s1">&#39;ri&#39;</span><span class="p">:</span> <span class="n">ri</span><span class="p">,</span> <span class="s1">&#39;stfn&#39;</span><span class="p">:</span> <span class="s1">&#39; &#39;</span><span class="p">,</span>
+                <span class="s1">&#39;radp&#39;</span><span class="p">:</span> <span class="n">rad_basis</span><span class="p">,</span> <span class="s1">&#39;evals&#39;</span><span class="p">:</span> <span class="n">evals</span><span class="p">,</span>
+                <span class="s1">&#39;nord&#39;</span><span class="p">:</span> <span class="n">nord</span><span class="p">,</span> <span class="s1">&#39;npo&#39;</span><span class="p">:</span> <span class="n">npo</span><span class="p">,</span> <span class="s1">&#39;ord&#39;</span><span class="p">:</span> <span class="n">oord</span><span class="p">,</span>
+                <span class="s1">&#39;rabas&#39;</span><span class="p">:</span> <span class="n">rabas</span><span class="p">,</span> <span class="s1">&#39;azbas&#39;</span><span class="p">:</span> <span class="n">azi_basis</span><span class="p">}</span>
+    <span class="k">return</span> <span class="n">gklbasis</span></div>
+
+
+
+<div class="viewcode-block" id="gkl_sfi">
+<a class="viewcode-back" href="../../../zernike.html#aotools.functions.karhunenLoeve.gkl_sfi">[docs]</a>
+<span class="k">def</span> <span class="nf">gkl_sfi</span><span class="p">(</span><span class="n">kl_basis</span><span class="p">,</span> <span class="n">i</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    return the i&#39;th function from the generalized KL basis &#39;bas&#39;.</span>
+<span class="sd">    &#39;bas&#39; must be generated by &#39;gkl_basis&#39;</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="k">if</span> <span class="n">i</span> <span class="o">&gt;</span> <span class="n">kl_basis</span><span class="p">[</span><span class="s1">&#39;nfunc&#39;</span><span class="p">]:</span>
+        <span class="k">raise</span><span class="p">(</span><span class="s2">&quot;The basis only contains </span><span class="si">{0:1.0f}</span><span class="s2"> &quot;</span>
+              <span class="s2">&quot;functions&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">kl_basis</span><span class="p">[</span><span class="s1">&#39;nfunc&#39;</span><span class="p">]))</span>
+    <span class="n">nr</span> <span class="o">=</span> <span class="n">kl_basis</span><span class="p">[</span><span class="s1">&#39;nr&#39;</span><span class="p">]</span>
+    <span class="n">npp</span> <span class="o">=</span> <span class="n">kl_basis</span><span class="p">[</span><span class="s1">&#39;np&#39;</span><span class="p">]</span>
+    <span class="n">oord</span> <span class="o">=</span> <span class="n">kl_basis</span><span class="p">[</span><span class="s1">&#39;ord&#39;</span><span class="p">][</span><span class="n">i</span><span class="p">]</span>
+
+    <span class="n">rad_bas</span> <span class="o">=</span> <span class="n">rebin</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">kl_basis</span><span class="p">[</span><span class="s1">&#39;rabas&#39;</span><span class="p">][:,</span> <span class="n">i</span><span class="p">],</span> <span class="p">(</span><span class="n">nr</span><span class="p">,</span> <span class="mi">1</span><span class="p">)),</span> <span class="p">(</span><span class="n">nr</span><span class="p">,</span> <span class="n">npp</span><span class="p">))</span>
+    <span class="n">az_bas</span> <span class="o">=</span> <span class="n">rebin</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">kl_basis</span><span class="p">[</span><span class="s1">&#39;azbas&#39;</span><span class="p">][</span><span class="n">oord</span><span class="p">,</span> <span class="p">:],</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">npp</span><span class="p">)),</span> <span class="p">(</span><span class="n">nr</span><span class="p">,</span> <span class="n">npp</span><span class="p">))</span>
+
+    <span class="n">sf</span> <span class="o">=</span> <span class="n">rad_bas</span> <span class="o">*</span> <span class="n">az_bas</span>
+
+    <span class="k">return</span> <span class="n">sf</span></div>
+
+
+
+<div class="viewcode-block" id="radii">
+<a class="viewcode-back" href="../../../zernike.html#aotools.functions.karhunenLoeve.radii">[docs]</a>
+<span class="k">def</span> <span class="nf">radii</span><span class="p">(</span><span class="n">nr</span><span class="p">,</span> <span class="n">npp</span><span class="p">,</span> <span class="n">ri</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Use to generate a polar coordinate system.</span>
+
+<span class="sd">    Generate an nr x npp array with npp copies of the radial coordinate</span>
+<span class="sd">    array.</span>
+<span class="sd">    Radial coordinate span the range from r=ri to r=1 with</span>
+<span class="sd">    successive annuli having equal areas.</span>
+
+<span class="sd">    ie, the area between ri and 1 is divided into nr equal rings, and</span>
+<span class="sd">    the points are positioned at the half-area mark on each ring;</span>
+<span class="sd">    there are no points on the border</span>
+
+<span class="sd">    see also</span>
+<span class="sd">    --------</span>
+<span class="sd">    polang</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="c1"># r2 = ri**2 + (np.arange(nr) + 0.5) / nr * (1 - ri**2)</span>
+    <span class="n">r2</span> <span class="o">=</span> <span class="n">ri</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">nr</span><span class="p">))</span> <span class="o">/</span> <span class="n">nr</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">ri</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+    <span class="n">rs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">r2</span><span class="p">)</span>
+    <span class="n">ra</span> <span class="o">=</span> <span class="n">rebin</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">rs</span><span class="p">,</span> <span class="p">(</span><span class="n">nr</span><span class="p">,</span> <span class="mi">1</span><span class="p">)),</span> <span class="p">(</span><span class="n">nr</span><span class="p">,</span> <span class="n">npp</span><span class="p">))</span>
+    <span class="c1"># ra = rebin(rs, nr, npp)</span>
+    <span class="k">return</span> <span class="n">ra</span></div>
+
+
+
+<div class="viewcode-block" id="polang">
+<a class="viewcode-back" href="../../../zernike.html#aotools.functions.karhunenLoeve.polang">[docs]</a>
+<span class="k">def</span> <span class="nf">polang</span><span class="p">(</span><span class="n">r</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Generate an array with the same dimensions as r, but containing the</span>
+<span class="sd">        azimuthal values for a polar coordinate system.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="n">s</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">shape</span><span class="p">(</span><span class="n">r</span><span class="p">)</span>
+    <span class="n">nr</span> <span class="o">=</span> <span class="n">s</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">npp</span> <span class="o">=</span> <span class="n">s</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+    <span class="c1"># phi = np.zeros((nr, npp))</span>
+    <span class="n">phi1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">npp</span><span class="p">)</span> <span class="o">/</span> <span class="n">npp</span> <span class="o">*</span> <span class="mf">2.0</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span>
+
+    <span class="n">phi</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="n">rebin</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">phi1</span><span class="p">,</span> <span class="p">(</span><span class="n">npp</span><span class="p">,</span> <span class="mi">1</span><span class="p">)),</span> <span class="p">(</span><span class="n">npp</span><span class="p">,</span> <span class="n">nr</span><span class="p">)))</span>
+    <span class="k">return</span> <span class="n">phi</span></div>
+
+
+
+<div class="viewcode-block" id="set_pctr">
+<a class="viewcode-back" href="../../../zernike.html#aotools.functions.karhunenLoeve.set_pctr">[docs]</a>
+<span class="k">def</span> <span class="nf">set_pctr</span><span class="p">(</span><span class="n">bas</span><span class="p">,</span> <span class="n">ncp</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">ncmar</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    call pcgeom to build the dic geom_struct with the</span>
+<span class="sd">    right initializtions.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">        bas : dic</span>
+<span class="sd">            gkl_basis dic built with the gkl_bas routine</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="k">if</span> <span class="n">ncmar</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">ncmar</span> <span class="o">=</span> <span class="mi">2</span>
+    <span class="k">if</span> <span class="n">ncp</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">ncp</span> <span class="o">=</span> <span class="mi">128</span>
+
+    <span class="k">return</span> <span class="n">pcgeom</span><span class="p">(</span><span class="n">bas</span><span class="p">[</span><span class="s1">&#39;nr&#39;</span><span class="p">],</span> <span class="n">bas</span><span class="p">[</span><span class="s1">&#39;np&#39;</span><span class="p">],</span> <span class="n">ncp</span><span class="p">,</span> <span class="n">bas</span><span class="p">[</span><span class="s1">&#39;ri&#39;</span><span class="p">],</span> <span class="n">ncmar</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="setpincs">
+<a class="viewcode-back" href="../../../zernike.html#aotools.functions.karhunenLoeve.setpincs">[docs]</a>
+<span class="k">def</span> <span class="nf">setpincs</span><span class="p">(</span><span class="n">ax</span><span class="p">,</span> <span class="n">ay</span><span class="p">,</span> <span class="n">px</span><span class="p">,</span> <span class="n">py</span><span class="p">,</span> <span class="n">ri</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    determine a set of squares for interpolating from cartesian</span>
+<span class="sd">    to polar coordinates,</span>
+<span class="sd">    using only those points with ri &lt;= r &lt;= 1</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="n">s</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">shape</span><span class="p">(</span><span class="n">ax</span><span class="p">)</span>
+    <span class="n">nc</span> <span class="o">=</span> <span class="n">s</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">s</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">shape</span><span class="p">(</span><span class="n">px</span><span class="p">)</span>
+    <span class="n">nr</span> <span class="o">=</span> <span class="n">s</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">npp</span> <span class="o">=</span> <span class="n">s</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+    <span class="c1"># dcar = (ax[0, nc - 1] - ax[0, 0]) / (nc - 1)</span>
+    <span class="n">dcar</span> <span class="o">=</span> <span class="p">(</span><span class="n">ax</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="n">nc</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">ax</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">])</span> <span class="o">/</span> <span class="p">(</span><span class="n">nc</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="n">ofcar</span> <span class="o">=</span> <span class="n">ax</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span>
+
+    <span class="n">rlx</span> <span class="o">=</span> <span class="p">(</span><span class="n">px</span> <span class="o">-</span> <span class="n">ofcar</span><span class="p">)</span> <span class="o">/</span> <span class="n">dcar</span>
+    <span class="n">rly</span> <span class="o">=</span> <span class="p">(</span><span class="n">py</span> <span class="o">-</span> <span class="n">ofcar</span><span class="p">)</span> <span class="o">/</span> <span class="n">dcar</span>
+    <span class="n">lx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">rlx</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="s1">&#39;int&#39;</span><span class="p">)</span>
+    <span class="n">ly</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">rly</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="s1">&#39;int&#39;</span><span class="p">)</span>
+    <span class="c1"># shx = rlx - lx</span>
+    <span class="c1"># shy = rly - ly</span>
+    <span class="n">shx</span> <span class="o">=</span> <span class="n">rlx</span> <span class="o">-</span> <span class="n">lx</span> <span class="o">-</span> <span class="mi">1</span>
+    <span class="n">shy</span> <span class="o">=</span> <span class="n">rly</span> <span class="o">-</span> <span class="n">ly</span> <span class="o">-</span> <span class="mi">1</span>
+    <span class="c1">#</span>
+    <span class="c1"># pincx = np.array([lx.T, (lx + 1).T, (lx + 1).T, lx.T])</span>
+    <span class="c1"># pincy = np.array([ly.T, ly.T, (ly + 1).T, (ly + 1).T])</span>
+    <span class="n">pincx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([(</span><span class="n">lx</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="p">(</span><span class="n">lx</span><span class="p">)</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="p">(</span><span class="n">lx</span><span class="p">)</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="p">(</span><span class="n">lx</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">T</span><span class="p">])</span>
+    <span class="n">pincy</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([(</span><span class="n">ly</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="p">(</span><span class="n">ly</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="p">(</span><span class="n">ly</span><span class="p">)</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="p">(</span><span class="n">ly</span><span class="p">)</span><span class="o">.</span><span class="n">T</span><span class="p">])</span>
+    <span class="n">pincw</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">shx</span><span class="p">)</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="p">(</span><span class="n">shx</span><span class="p">)</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="p">(</span><span class="n">shx</span><span class="p">)</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">shx</span><span class="p">)</span><span class="o">.</span><span class="n">T</span><span class="p">])</span> <span class="o">*</span> \
+        <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">shy</span><span class="p">)</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">shy</span><span class="p">)</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="n">shy</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="n">shy</span><span class="o">.</span><span class="n">T</span><span class="p">])</span>
+    <span class="n">axy</span> <span class="o">=</span> <span class="n">ax</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="n">ay</span><span class="o">**</span><span class="mi">2</span>
+    <span class="n">axyinap</span> <span class="o">=</span> <span class="p">((</span><span class="n">axy</span> <span class="o">&gt;=</span> <span class="n">ri</span><span class="o">**</span><span class="mf">2.</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">axy</span> <span class="o">&lt;=</span> <span class="mf">1.0</span><span class="p">))</span>
+    <span class="c1"># axyinap = ((axy &gt;= ri**2.) &amp; (axy &lt;= 1.0))</span>
+    <span class="c1"># print(pincx.shape, pincy.shape, axyinap.shape, pincw.shape)</span>
+    <span class="n">pincw</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="n">pincw</span> <span class="o">*</span> <span class="n">axyinap</span><span class="p">[</span><span class="n">pincx</span><span class="p">,</span> <span class="n">pincy</span><span class="p">])</span>
+    <span class="n">pincw</span> <span class="o">=</span> <span class="n">pincw</span> <span class="o">*</span> <span class="n">rebin</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="mf">1.0</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">pincw</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">nr</span><span class="p">,</span> <span class="n">npp</span><span class="p">)),</span>
+                          <span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="n">npp</span><span class="p">,</span> <span class="n">nr</span><span class="p">))</span>
+
+    <span class="k">return</span> <span class="n">pincx</span><span class="p">,</span> <span class="n">pincy</span><span class="p">,</span> <span class="n">pincw</span></div>
+
+
+
+<div class="viewcode-block" id="pcgeom">
+<a class="viewcode-back" href="../../../zernike.html#aotools.functions.karhunenLoeve.pcgeom">[docs]</a>
+<span class="k">def</span> <span class="nf">pcgeom</span><span class="p">(</span><span class="n">nr</span><span class="p">,</span> <span class="n">npp</span><span class="p">,</span> <span class="n">ncp</span><span class="p">,</span> <span class="n">ri</span><span class="p">,</span> <span class="n">ncmar</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    This routine builds a geom dic.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">        px, py : int</span>
+<span class="sd">            the x, y coordinates of points in the polar arrays.</span>
+<span class="sd">        cr, cp :</span>
+<span class="sd">            the r, phi coordinates of points in the cartesian grids.</span>
+<span class="sd">        ncmar :</span>
+<span class="sd">            allows the possibility that there is a margin of ncmar points in the</span>
+<span class="sd">            cartesian arrays outside the region of interest.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="n">nused</span> <span class="o">=</span> <span class="n">ncp</span> <span class="o">-</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">ncmar</span>
+    <span class="n">ff</span> <span class="o">=</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">nused</span>
+    <span class="n">hw</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">ncp</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span>
+    <span class="c1"># hw = float(ncp) / 2</span>
+
+    <span class="n">r</span> <span class="o">=</span> <span class="n">radii</span><span class="p">(</span><span class="n">nr</span><span class="p">,</span> <span class="n">npp</span><span class="p">,</span> <span class="n">ri</span><span class="p">)</span>
+    <span class="n">p</span> <span class="o">=</span> <span class="n">polang</span><span class="p">(</span><span class="n">r</span><span class="p">)</span>
+
+    <span class="n">px0</span> <span class="o">=</span> <span class="n">r</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">p</span><span class="p">)</span>
+    <span class="n">py0</span> <span class="o">=</span> <span class="n">r</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">p</span><span class="p">)</span>
+    <span class="n">px</span> <span class="o">=</span> <span class="n">ff</span> <span class="o">*</span> <span class="n">px0</span> <span class="o">+</span> <span class="n">hw</span>
+    <span class="n">py</span> <span class="o">=</span> <span class="n">ff</span> <span class="o">*</span> <span class="n">py0</span> <span class="o">+</span> <span class="n">hw</span>
+    <span class="n">ax</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">ncp</span> <span class="o">*</span> <span class="n">ncp</span><span class="p">),</span> <span class="p">(</span><span class="n">ncp</span><span class="p">,</span> <span class="n">ncp</span><span class="p">))</span> <span class="o">%</span> <span class="n">ncp</span> <span class="o">-</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="p">(</span><span class="n">ncp</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="c1"># ax = ax / (0.5 * nused - 0.5)</span>
+    <span class="n">ax</span> <span class="o">=</span> <span class="n">ax</span> <span class="o">/</span> <span class="p">(</span><span class="mf">0.5</span> <span class="o">*</span> <span class="n">nused</span><span class="p">)</span>
+    <span class="n">ay</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="n">ax</span><span class="p">)</span>
+    <span class="n">pincx</span><span class="p">,</span> <span class="n">pincy</span><span class="p">,</span> <span class="n">pincw</span> <span class="o">=</span> <span class="n">setpincs</span><span class="p">(</span><span class="n">ax</span><span class="p">,</span> <span class="n">ay</span><span class="p">,</span> <span class="n">px0</span><span class="p">,</span> <span class="n">py0</span><span class="p">,</span> <span class="n">ri</span><span class="p">)</span>
+    <span class="n">dpi</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span>
+    <span class="n">cr2</span> <span class="o">=</span> <span class="p">(</span><span class="n">ax</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="n">ay</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+    <span class="c1"># ap = (cr2 &gt; ri**2) &amp; (cr2 &lt; 1.)</span>
+    <span class="n">ap</span> <span class="o">=</span> <span class="p">(</span><span class="n">cr2</span> <span class="o">&gt;=</span> <span class="n">ri</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">cr2</span> <span class="o">&lt;=</span> <span class="mf">1.</span><span class="p">)</span>
+    <span class="c1"># ap = np.clip(cr2, ri**2 + 1e-3, 0.999)</span>
+    <span class="c1"># cr = (cr2 - ri**2) / (1 - ri**2) * nr - 0.5</span>
+    <span class="n">cr</span> <span class="o">=</span> <span class="p">(</span><span class="n">cr2</span> <span class="o">-</span> <span class="n">ri</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">ri</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span> <span class="o">*</span> <span class="n">nr</span>  <span class="c1"># - 0.5</span>
+    <span class="n">cp</span> <span class="o">=</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arctan2</span><span class="p">(</span><span class="n">ay</span><span class="p">,</span> <span class="n">ax</span><span class="p">)</span> <span class="o">+</span> <span class="n">dpi</span><span class="p">)</span> <span class="o">%</span> <span class="n">dpi</span>
+    <span class="n">cp</span> <span class="o">=</span> <span class="p">(</span><span class="n">npp</span> <span class="o">/</span> <span class="n">dpi</span><span class="p">)</span> <span class="o">*</span> <span class="n">cp</span>
+
+    <span class="c1"># cr = np.clip(cr, 1.e-3, nr - 1.001)</span>
+    <span class="c1"># cp = np.clip(cp, 1.e-3, npp - 1.001)</span>
+    <span class="n">cr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">cr</span><span class="p">,</span> <span class="mf">1e-3</span><span class="p">,</span> <span class="n">nr</span> <span class="o">-</span> <span class="mf">1.001</span><span class="p">)</span>  <span class="c1"># - 1.00)</span>
+    <span class="n">cp</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">cp</span><span class="p">,</span> <span class="mf">1e-3</span><span class="p">,</span> <span class="n">npp</span> <span class="o">-</span> <span class="mf">1.001</span><span class="p">)</span>  <span class="c1"># - 1.00)</span>
+
+    <span class="n">geom</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;px&#39;</span><span class="p">:</span> <span class="n">px</span><span class="p">,</span> <span class="s1">&#39;py&#39;</span><span class="p">:</span> <span class="n">py</span><span class="p">,</span> <span class="s1">&#39;cr&#39;</span><span class="p">:</span> <span class="n">cr</span><span class="p">,</span> <span class="s1">&#39;cp&#39;</span><span class="p">:</span> <span class="n">cp</span><span class="p">,</span>
+            <span class="s1">&#39;pincx&#39;</span><span class="p">:</span> <span class="n">pincx</span><span class="p">,</span> <span class="s1">&#39;pincy&#39;</span><span class="p">:</span> <span class="n">pincy</span><span class="p">,</span> <span class="s1">&#39;pincw&#39;</span><span class="p">:</span> <span class="n">pincw</span><span class="p">,</span>
+            <span class="s1">&#39;ap&#39;</span><span class="p">:</span> <span class="n">ap</span><span class="p">,</span> <span class="s1">&#39;ncp&#39;</span><span class="p">:</span> <span class="n">ncp</span><span class="p">,</span> <span class="s1">&#39;ncmar&#39;</span><span class="p">:</span> <span class="n">ncmar</span><span class="p">}</span>
+
+    <span class="k">return</span> <span class="n">geom</span></div>
+
+
+
+<div class="viewcode-block" id="pol2car">
+<a class="viewcode-back" href="../../../zernike.html#aotools.functions.karhunenLoeve.pol2car">[docs]</a>
+<span class="k">def</span> <span class="nf">pol2car</span><span class="p">(</span><span class="n">cpgeom</span><span class="p">,</span> <span class="n">pol</span><span class="p">,</span> <span class="n">mask</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Polar to cartesian conversion.</span>
+
+<span class="sd">    (points not in the aperture are treated as though they were at</span>
+<span class="sd">    the first or last radial polar value...)</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="c1"># f = interp2d(cpgeom[&#39;cr&#39;], cpgeom[&#39;cp&#39;], pol)</span>
+
+    <span class="n">cd</span> <span class="o">=</span> <span class="n">map_coordinates</span><span class="p">(</span><span class="n">pol</span><span class="p">,</span> <span class="p">[</span><span class="n">cpgeom</span><span class="p">[</span><span class="s1">&#39;cr&#39;</span><span class="p">],</span> <span class="n">cpgeom</span><span class="p">[</span><span class="s1">&#39;cp&#39;</span><span class="p">]],</span>
+                         <span class="n">order</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;nearest&#39;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">mask</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">False</span><span class="p">:</span>
+        <span class="n">cd</span> <span class="o">=</span> <span class="n">cd</span> <span class="o">*</span> <span class="n">cpgeom</span><span class="p">[</span><span class="s1">&#39;ap&#39;</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">cd</span></div>
+
+
+
+<div class="viewcode-block" id="make_kl">
+<a class="viewcode-back" href="../../../zernike.html#aotools.functions.karhunenLoeve.make_kl">[docs]</a>
+<span class="k">def</span> <span class="nf">make_kl</span><span class="p">(</span><span class="n">nmax</span><span class="p">,</span> <span class="n">dim</span><span class="p">,</span> <span class="n">ri</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">nr</span><span class="o">=</span><span class="mi">40</span><span class="p">,</span>
+            <span class="n">stf</span><span class="o">=</span><span class="s1">&#39;kolmogorov&#39;</span><span class="p">,</span> <span class="n">outerscale</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">mask</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Main routine to generatre a KL basis of dimension [nmax, dim, dim].</span>
+
+<span class="sd">    For Kolmogorov statistics, e.g. ::</span>
+
+<span class="sd">        kl, _, _, _ = make_kl(150, 128, ri = 0.2, stf=&#39;kolmogorov&#39;)</span>
+
+<span class="sd">    | As a rule of thumb</span>
+<span class="sd">    |     nr x npp = 50 x 250 is fine up to 500 functions</span>
+<span class="sd">    |     60 x 300 for a thousand</span>
+<span class="sd">    |     80 x 400 for three thousands.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    nmax : int</span>
+<span class="sd">        number of KL function to generate</span>
+<span class="sd">    dim : int</span>
+<span class="sd">        size of the KL arrays</span>
+<span class="sd">    ri : float</span>
+<span class="sd">        radial central obscuration normalized by D/2</span>
+<span class="sd">    nr : int</span>
+<span class="sd">        number of point on radius. npp (number of azimuthal pts) is  =2 pi * nr</span>
+<span class="sd">    stf : string</span>
+<span class="sd">        structure function tag. Default is &#39;kolmogorov&#39;</span>
+<span class="sd">    outerscale : float</span>
+<span class="sd">        outer scale in units of telescope diameter. Releveant if von vonKarman</span>
+<span class="sd">        stf. (not implemented yet)</span>
+<span class="sd">    mask : bool</span>
+<span class="sd">        pupil masking. Default is True</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    kl : ndarray (nmax, dim, dim)</span>
+<span class="sd">        KL basis in cartesian coordinates</span>
+<span class="sd">    varKL : 1darray</span>
+<span class="sd">        associated variance</span>
+<span class="sd">    pupil : 2darray</span>
+<span class="sd">        pupil</span>
+<span class="sd">    polar_base : dictionary</span>
+<span class="sd">        polar base dictionary used for the KL basis computation.</span>
+<span class="sd">        as returned by &#39;gkl_basis&#39;</span>
+
+<span class="sd">    SEE ALSO</span>
+<span class="sd">    --------</span>
+<span class="sd">    gkl_basis, set_pctr, pol2car</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">ri</span> <span class="o">==</span> <span class="mi">0</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;KL modes generation only works for annular apertures, ri must be &gt; 0!&quot;</span><span class="p">)</span>
+
+    <span class="n">npp</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="n">nr</span><span class="p">)</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">nr</span> <span class="o">*</span> <span class="n">npp</span><span class="p">)</span> <span class="o">&lt;</span> <span class="p">(</span><span class="mi">15</span> <span class="o">*</span> <span class="n">nmax</span><span class="p">):</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Polar grid sampling may be insufficienttoto_basis2.fits, please&#39;</span>
+              <span class="s1">&#39; consider increasing nr&#39;</span><span class="p">)</span>
+
+    <span class="k">assert</span> <span class="p">(</span><span class="n">stf</span> <span class="o">==</span> <span class="s1">&#39;kolmogorov&#39;</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span><span class="n">stf</span> <span class="o">==</span> <span class="s1">&#39;kolstf&#39;</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span><span class="n">stf</span> <span class="o">==</span> <span class="s1">&#39;vonKarman&#39;</span><span class="p">)</span> \
+        <span class="ow">or</span> <span class="p">(</span><span class="n">stf</span> <span class="o">==</span> <span class="s1">&#39;karman&#39;</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span><span class="n">stf</span> <span class="o">==</span> <span class="s1">&#39;vk&#39;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">stf</span> <span class="o">==</span> <span class="s1">&#39;vonKarman&#39;</span><span class="p">:</span>
+        <span class="k">assert</span> <span class="n">outerscale</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+
+    <span class="c1"># from aotools import circle</span>
+    <span class="c1"># if ri &gt; 0.0:</span>
+    <span class="c1">#     pup = circle(dim / 2, dim) - circle(dim / 2 * ri, dim)</span>
+    <span class="c1"># else:</span>
+    <span class="c1">#     pup = circle(dim / 2, dim)</span>
+
+    <span class="n">polar_base</span> <span class="o">=</span> <span class="n">gkl_basis</span><span class="p">(</span><span class="n">ri</span><span class="p">,</span> <span class="n">nr</span><span class="p">,</span> <span class="n">npp</span><span class="p">,</span> <span class="n">nfunc</span><span class="o">=</span><span class="n">nmax</span><span class="p">,</span>
+                           <span class="n">stf</span><span class="o">=</span><span class="n">stf</span><span class="p">,</span> <span class="n">outerscale</span><span class="o">=</span><span class="n">outerscale</span><span class="p">)</span>
+
+    <span class="n">pc1</span> <span class="o">=</span> <span class="n">set_pctr</span><span class="p">(</span><span class="n">polar_base</span><span class="p">,</span> <span class="n">ncp</span><span class="o">=</span><span class="n">dim</span><span class="p">,</span> <span class="n">ncmar</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+
+    <span class="n">kl</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">nmax</span><span class="p">,</span> <span class="n">dim</span><span class="p">,</span> <span class="n">dim</span><span class="p">))</span>
+
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nmax</span><span class="p">):</span>
+        <span class="n">kl</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="p">:,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">pol2car</span><span class="p">(</span><span class="n">pc1</span><span class="p">,</span> <span class="n">gkl_sfi</span><span class="p">(</span><span class="n">polar_base</span><span class="p">,</span> <span class="n">i</span><span class="p">),</span> <span class="n">mask</span><span class="o">=</span><span class="n">mask</span><span class="p">)</span>
+        <span class="c1"># if mask is True:</span>
+        <span class="c1">#     kl[i, :, :] *= pup</span>
+
+    <span class="n">pupil</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">pc1</span><span class="p">[</span><span class="s1">&#39;ap&#39;</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="s1">&#39;float&#39;</span><span class="p">)</span>
+    <span class="c1"># pupil = pup</span>
+    <span class="n">varKL</span> <span class="o">=</span> <span class="n">polar_base</span><span class="p">[</span><span class="s1">&#39;evals&#39;</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">kl</span><span class="p">,</span> <span class="n">varKL</span><span class="p">,</span> <span class="n">pupil</span><span class="p">,</span> <span class="n">polar_base</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2019, The Authors.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

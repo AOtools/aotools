@@ -1,0 +1,247 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Welcome to the AOtools Documentation! &mdash; AOtools 0.1.dev477+g8f38ff7c1.d20260605 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=fa44fd50" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=867f5289"></script>
+      <script src="_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Introduction" href="introduction.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="#" class="icon icon-home">
+            AOtools
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="turbulence.html">Atmospheric Turbulence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="image_processing.html">Image Processing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="zernike.html">Circular Functions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="pupil.html">Telescope Pupils</a></li>
+<li class="toctree-l1"><a class="reference internal" href="wfs.html">Wavefront Sensors</a></li>
+<li class="toctree-l1"><a class="reference internal" href="opticalpropagation.html">Optical Propagation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="astronomy.html">Astronomical Functions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="fft.html">Normalised Fourier Transforms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="interpolation.html">Interpolation</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="#">AOtools</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="#" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Welcome to the AOtools Documentation!</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/index.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="welcome-to-the-aotools-documentation">
+<h1>Welcome to the AOtools Documentation!<a class="headerlink" href="#welcome-to-the-aotools-documentation" title="Link to this heading"></a></h1>
+<section id="introduction">
+<h2>Introduction<a class="headerlink" href="#introduction" title="Link to this heading"></a></h2>
+<p>AOtools is an attempt to gather together many common tools, equations and functions for Adaptive Optics.
+The idea is to provide an alternative to the current model, where a new AO researcher must write their own library
+of tools, many of which implement theory and ideas that have been in existance for over 20 years. AOtools will hopefully
+provide a common place to put these tools, which through use and bug fixes, should become reliable and well documented.</p>
+<section id="installation">
+<h3>Installation<a class="headerlink" href="#installation" title="Link to this heading"></a></h3>
+<p>AOtools uses mainly standard library functions, and all attempts have been made to avoid adding unneccessary dependencies.
+Currently, the library requires only</p>
+<ul class="simple">
+<li><p>numpy</p></li>
+<li><p>scipy</p></li>
+<li><p>astropy</p></li>
+<li><p>matplotlib</p></li>
+</ul>
+</section>
+</section>
+<section id="contents">
+<h2>Contents<a class="headerlink" href="#contents" title="Link to this heading"></a></h2>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="introduction.html">Introduction</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="introduction.html#installation">Installation</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="turbulence.html">Atmospheric Turbulence</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="turbulence.html#finite-phase-screens">Finite Phase Screens</a></li>
+<li class="toctree-l2"><a class="reference internal" href="turbulence.html#aotools.turbulence.phasescreen.ft_phase_screen"><code class="docutils literal notranslate"><span class="pre">ft_phase_screen()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="turbulence.html#aotools.turbulence.phasescreen.ft_sh_phase_screen"><code class="docutils literal notranslate"><span class="pre">ft_sh_phase_screen()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="turbulence.html#infinite-phase-screens">Infinite Phase Screens</a></li>
+<li class="toctree-l2"><a class="reference internal" href="turbulence.html#aotools.turbulence.infinitephasescreen.PhaseScreenKolmogorov"><code class="docutils literal notranslate"><span class="pre">PhaseScreenKolmogorov</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="turbulence.html#aotools.turbulence.infinitephasescreen.PhaseScreenVonKarman"><code class="docutils literal notranslate"><span class="pre">PhaseScreenVonKarman</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="turbulence.html#slope-covariance-matrix-generation">Slope Covariance Matrix Generation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="turbulence.html#aotools.turbulence.slopecovariance.CovarianceMatrix"><code class="docutils literal notranslate"><span class="pre">CovarianceMatrix</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="turbulence.html#aotools.turbulence.slopecovariance.calculate_structure_function"><code class="docutils literal notranslate"><span class="pre">calculate_structure_function()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="turbulence.html#aotools.turbulence.slopecovariance.calculate_wfs_seperations"><code class="docutils literal notranslate"><span class="pre">calculate_wfs_seperations()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="turbulence.html#aotools.turbulence.slopecovariance.create_tomographic_covariance_reconstructor"><code class="docutils literal notranslate"><span class="pre">create_tomographic_covariance_reconstructor()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="turbulence.html#aotools.turbulence.slopecovariance.mirror_covariance_matrix"><code class="docutils literal notranslate"><span class="pre">mirror_covariance_matrix()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="turbulence.html#aotools.turbulence.slopecovariance.structure_function_kolmogorov"><code class="docutils literal notranslate"><span class="pre">structure_function_kolmogorov()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="turbulence.html#aotools.turbulence.slopecovariance.structure_function_vk"><code class="docutils literal notranslate"><span class="pre">structure_function_vk()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="turbulence.html#aotools.turbulence.slopecovariance.wfs_covariance"><code class="docutils literal notranslate"><span class="pre">wfs_covariance()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="turbulence.html#aotools.turbulence.slopecovariance.wfs_covariance_mpwrap"><code class="docutils literal notranslate"><span class="pre">wfs_covariance_mpwrap()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="turbulence.html#temporal-power-spectra">Temporal Power Spectra</a></li>
+<li class="toctree-l2"><a class="reference internal" href="turbulence.html#aotools.turbulence.temporal_ps.calc_slope_temporalps"><code class="docutils literal notranslate"><span class="pre">calc_slope_temporalps()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="turbulence.html#aotools.turbulence.temporal_ps.fit_tps"><code class="docutils literal notranslate"><span class="pre">fit_tps()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="turbulence.html#aotools.turbulence.temporal_ps.get_tps_time_axis"><code class="docutils literal notranslate"><span class="pre">get_tps_time_axis()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="turbulence.html#aotools.turbulence.temporal_ps.plot_tps"><code class="docutils literal notranslate"><span class="pre">plot_tps()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="turbulence.html#atmospheric-parameter-conversions">Atmospheric Parameter Conversions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="turbulence.html#aotools.turbulence.atmos_conversions.cn2_to_r0"><code class="docutils literal notranslate"><span class="pre">cn2_to_r0()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="turbulence.html#aotools.turbulence.atmos_conversions.cn2_to_seeing"><code class="docutils literal notranslate"><span class="pre">cn2_to_seeing()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="turbulence.html#aotools.turbulence.atmos_conversions.coherenceTime"><code class="docutils literal notranslate"><span class="pre">coherenceTime()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="turbulence.html#aotools.turbulence.atmos_conversions.isoplanaticAngle"><code class="docutils literal notranslate"><span class="pre">isoplanaticAngle()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="turbulence.html#aotools.turbulence.atmos_conversions.r0_from_slopes"><code class="docutils literal notranslate"><span class="pre">r0_from_slopes()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="turbulence.html#aotools.turbulence.atmos_conversions.r0_to_cn2"><code class="docutils literal notranslate"><span class="pre">r0_to_cn2()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="turbulence.html#aotools.turbulence.atmos_conversions.r0_to_seeing"><code class="docutils literal notranslate"><span class="pre">r0_to_seeing()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="turbulence.html#aotools.turbulence.atmos_conversions.rytov_variance"><code class="docutils literal notranslate"><span class="pre">rytov_variance()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="turbulence.html#aotools.turbulence.atmos_conversions.seeing_to_cn2"><code class="docutils literal notranslate"><span class="pre">seeing_to_cn2()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="turbulence.html#aotools.turbulence.atmos_conversions.seeing_to_r0"><code class="docutils literal notranslate"><span class="pre">seeing_to_r0()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="turbulence.html#aotools.turbulence.atmos_conversions.slope_variance_from_r0"><code class="docutils literal notranslate"><span class="pre">slope_variance_from_r0()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="image_processing.html">Image Processing</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="image_processing.html#centroiders">Centroiders</a></li>
+<li class="toctree-l2"><a class="reference internal" href="image_processing.html#aotools.image_processing.centroiders.brightest_pixel"><code class="docutils literal notranslate"><span class="pre">brightest_pixel()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="image_processing.html#aotools.image_processing.centroiders.centre_of_gravity"><code class="docutils literal notranslate"><span class="pre">centre_of_gravity()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="image_processing.html#aotools.image_processing.centroiders.correlation_centroid"><code class="docutils literal notranslate"><span class="pre">correlation_centroid()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="image_processing.html#aotools.image_processing.centroiders.cross_correlate"><code class="docutils literal notranslate"><span class="pre">cross_correlate()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="image_processing.html#aotools.image_processing.centroiders.quadCell"><code class="docutils literal notranslate"><span class="pre">quadCell()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="image_processing.html#contrast">Contrast</a></li>
+<li class="toctree-l2"><a class="reference internal" href="image_processing.html#aotools.image_processing.contrast.image_contrast"><code class="docutils literal notranslate"><span class="pre">image_contrast()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="image_processing.html#aotools.image_processing.contrast.rms_contrast"><code class="docutils literal notranslate"><span class="pre">rms_contrast()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="image_processing.html#psf-analysis">PSF Analysis</a></li>
+<li class="toctree-l2"><a class="reference internal" href="image_processing.html#aotools.image_processing.psf.azimuthal_average"><code class="docutils literal notranslate"><span class="pre">azimuthal_average()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="image_processing.html#aotools.image_processing.psf.encircled_energy"><code class="docutils literal notranslate"><span class="pre">encircled_energy()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="zernike.html">Circular Functions</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="zernike.html#module-aotools.functions.zernike">Zernike Modes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="zernike.html#module-aotools.functions.karhunenLoeve">Karhunen Loeve Modes</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="pupil.html">Telescope Pupils</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="pupil.html#pupil-maps">Pupil Maps</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pupil.html#aotools.functions.pupil.circle"><code class="docutils literal notranslate"><span class="pre">circle()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="wfs.html">Wavefront Sensors</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="wfs.html#aotools.wfs.computeFillFactor"><code class="docutils literal notranslate"><span class="pre">computeFillFactor()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="wfs.html#aotools.wfs.findActiveSubaps"><code class="docutils literal notranslate"><span class="pre">findActiveSubaps()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="wfs.html#aotools.wfs.make_subaps_2d"><code class="docutils literal notranslate"><span class="pre">make_subaps_2d()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="opticalpropagation.html">Optical Propagation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="opticalpropagation.html#aotools.opticalpropagation.angularSpectrum"><code class="docutils literal notranslate"><span class="pre">angularSpectrum()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="opticalpropagation.html#aotools.opticalpropagation.lensAgainst"><code class="docutils literal notranslate"><span class="pre">lensAgainst()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="opticalpropagation.html#aotools.opticalpropagation.oneStepFresnel"><code class="docutils literal notranslate"><span class="pre">oneStepFresnel()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="opticalpropagation.html#aotools.opticalpropagation.twoStepFresnel"><code class="docutils literal notranslate"><span class="pre">twoStepFresnel()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="astronomy.html">Astronomical Functions</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="astronomy.html#module-aotools.astronomy">Magnitude and Flux Calculations</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="fft.html">Normalised Fourier Transforms</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="fft.html#aotools.fouriertransform.ft"><code class="docutils literal notranslate"><span class="pre">ft()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="fft.html#aotools.fouriertransform.ft2"><code class="docutils literal notranslate"><span class="pre">ft2()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="fft.html#aotools.fouriertransform.ift"><code class="docutils literal notranslate"><span class="pre">ift()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="fft.html#aotools.fouriertransform.ift2"><code class="docutils literal notranslate"><span class="pre">ift2()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="fft.html#aotools.fouriertransform.irft"><code class="docutils literal notranslate"><span class="pre">irft()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="fft.html#aotools.fouriertransform.irft2"><code class="docutils literal notranslate"><span class="pre">irft2()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="fft.html#aotools.fouriertransform.rft"><code class="docutils literal notranslate"><span class="pre">rft()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="fft.html#aotools.fouriertransform.rft2"><code class="docutils literal notranslate"><span class="pre">rft2()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="interpolation.html">Interpolation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="interpolation.html#aotools.interpolation.binImgs"><code class="docutils literal notranslate"><span class="pre">binImgs()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="interpolation.html#aotools.interpolation.zoom"><code class="docutils literal notranslate"><span class="pre">zoom()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="interpolation.html#aotools.interpolation.zoom_rbs"><code class="docutils literal notranslate"><span class="pre">zoom_rbs()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</div>
+</section>
+</section>
+<section id="indices-and-tables">
+<h1>Indices and tables<a class="headerlink" href="#indices-and-tables" title="Link to this heading"></a></h1>
+<ul class="simple">
+<li><p><a class="reference internal" href="genindex.html"><span class="std std-ref">Index</span></a></p></li>
+<li><p><a class="reference internal" href="py-modindex.html"><span class="std std-ref">Module Index</span></a></p></li>
+<li><p><a class="reference internal" href="search.html"><span class="std std-ref">Search Page</span></a></p></li>
+</ul>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="introduction.html" class="btn btn-neutral float-right" title="Introduction" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2019, The Authors.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

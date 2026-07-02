@@ -1,0 +1,276 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>aotools.turbulence.phasescreen &mdash; AOtools 0.1.dev477+g8f38ff7c1.d20260605 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=fa44fd50" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=867f5289"></script>
+      <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            AOtools
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../turbulence.html">Atmospheric Turbulence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../image_processing.html">Image Processing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../zernike.html">Circular Functions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../pupil.html">Telescope Pupils</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../wfs.html">Wavefront Sensors</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../opticalpropagation.html">Optical Propagation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../astronomy.html">Astronomical Functions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../fft.html">Normalised Fourier Transforms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../interpolation.html">Interpolation</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">AOtools</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">aotools.turbulence.phasescreen</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for aotools.turbulence.phasescreen</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Finite Phase Screens</span>
+<span class="sd">--------------------</span>
+
+<span class="sd">Creation of phase screens of a defined size with Von Karmen Statistics.</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span>
+<span class="kn">from</span> <span class="nn">numpy</span> <span class="kn">import</span> <span class="n">fft</span>
+<span class="kn">import</span> <span class="nn">time</span>
+<span class="kn">import</span> <span class="nn">random</span>
+
+
+<div class="viewcode-block" id="ft_sh_phase_screen">
+<a class="viewcode-back" href="../../../turbulence.html#aotools.turbulence.phasescreen.ft_sh_phase_screen">[docs]</a>
+<span class="k">def</span> <span class="nf">ft_sh_phase_screen</span><span class="p">(</span><span class="n">r0</span><span class="p">,</span> <span class="n">N</span><span class="p">,</span> <span class="n">delta</span><span class="p">,</span> <span class="n">L0</span><span class="p">,</span> <span class="n">l0</span><span class="p">,</span> <span class="n">FFT</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Creates a random phase screen with Von Karmen statistics with added</span>
+<span class="sd">    sub-harmonics to augment tip-tilt modes.</span>
+<span class="sd">    (Schmidt 2010)</span>
+
+<span class="sd">    .. note::</span>
+<span class="sd">        The phase screen is returned as a 2d array, with each element representing the phase </span>
+<span class="sd">        change in **radians**. This means that to obtain the physical phase distortion in nanometres, </span>
+<span class="sd">        it must be multiplied by (wavelength / (2*pi)), (where `wavellength` here is the same wavelength</span>
+<span class="sd">        in which r0 is given in the function arguments)</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        r0 (float): r0 parameter of scrn in metres</span>
+<span class="sd">        N (int): Size of phase scrn in pxls</span>
+<span class="sd">        delta (float): size in Metres of each pxl</span>
+<span class="sd">        L0 (float): Size of outer-scale in metres</span>
+<span class="sd">        l0 (float): inner scale in metres</span>
+<span class="sd">        seed (int, optional): seed for random number generator. If provided, </span>
+<span class="sd">            allows for deterministic screens  </span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        ndarray: numpy array representing phase screen in radians</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">R</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">default_rng</span><span class="p">(</span><span class="n">seed</span><span class="p">)</span>
+
+    <span class="n">D</span> <span class="o">=</span> <span class="n">N</span> <span class="o">*</span> <span class="n">delta</span>
+    <span class="c1"># high-frequency screen from FFT method</span>
+    <span class="n">phs_hi</span> <span class="o">=</span> <span class="n">ft_phase_screen</span><span class="p">(</span><span class="n">r0</span><span class="p">,</span> <span class="n">N</span><span class="p">,</span> <span class="n">delta</span><span class="p">,</span> <span class="n">L0</span><span class="p">,</span> <span class="n">l0</span><span class="p">,</span> <span class="n">FFT</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="n">seed</span><span class="p">)</span>
+
+    <span class="c1"># spatial grid [m]</span>
+    <span class="n">coords</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="o">-</span><span class="n">N</span><span class="o">/</span><span class="mi">2</span><span class="p">,</span><span class="n">N</span><span class="o">/</span><span class="mi">2</span><span class="p">)</span><span class="o">*</span><span class="n">delta</span>
+    <span class="n">x</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">meshgrid</span><span class="p">(</span><span class="n">coords</span><span class="p">,</span><span class="n">coords</span><span class="p">)</span>
+
+    <span class="c1"># initialize low-freq screen</span>
+    <span class="n">phs_lo</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">phs_hi</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+
+    <span class="c1"># loop over frequency grids with spacing 1/(3^p*L)</span>
+    <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">4</span><span class="p">):</span>
+        <span class="c1"># setup the PSD</span>
+        <span class="n">del_f</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">/</span> <span class="p">(</span><span class="mi">3</span><span class="o">**</span><span class="n">p</span><span class="o">*</span><span class="n">D</span><span class="p">)</span> <span class="c1">#frequency grid spacing [1/m]</span>
+        <span class="n">fx</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">)</span> <span class="o">*</span> <span class="n">del_f</span>
+
+        <span class="c1"># frequency grid [1/m]</span>
+        <span class="n">fx</span><span class="p">,</span> <span class="n">fy</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">meshgrid</span><span class="p">(</span><span class="n">fx</span><span class="p">,</span><span class="n">fx</span><span class="p">)</span>
+        <span class="n">f</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">fx</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span>  <span class="n">fy</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span> <span class="c1"># polar grid</span>
+
+        <span class="n">fm</span> <span class="o">=</span> <span class="mf">5.92</span><span class="o">/</span><span class="n">l0</span><span class="o">/</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">numpy</span><span class="o">.</span><span class="n">pi</span><span class="p">)</span> <span class="c1"># inner scale frequency [1/m]</span>
+        <span class="n">f0</span> <span class="o">=</span> <span class="mf">1.</span><span class="o">/</span><span class="n">L0</span>
+
+        <span class="c1"># outer scale frequency [1/m]</span>
+        <span class="c1"># modified von Karman atmospheric phase PSD</span>
+        <span class="n">PSD_phi</span> <span class="o">=</span> <span class="p">(</span><span class="mf">0.023</span><span class="o">*</span><span class="n">r0</span><span class="o">**</span><span class="p">(</span><span class="o">-</span><span class="mf">5.</span><span class="o">/</span><span class="mi">3</span><span class="p">)</span>
+                    <span class="o">*</span> <span class="n">numpy</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="o">*</span><span class="p">(</span><span class="n">f</span><span class="o">/</span><span class="n">fm</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span> <span class="o">/</span> <span class="p">((</span><span class="n">f</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="n">f0</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span><span class="o">**</span><span class="p">(</span><span class="mf">11.</span><span class="o">/</span><span class="mi">6</span><span class="p">))</span> <span class="p">)</span>
+        <span class="n">PSD_phi</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+
+        <span class="c1"># random draws of Fourier coefficients</span>
+        <span class="n">cn</span> <span class="o">=</span> <span class="p">(</span> <span class="p">(</span><span class="n">R</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span><span class="mi">3</span><span class="p">))</span>
+            <span class="o">+</span> <span class="mi">1</span><span class="n">j</span><span class="o">*</span><span class="n">R</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span><span class="mi">3</span><span class="p">))</span> <span class="p">)</span>
+                        <span class="o">*</span> <span class="n">numpy</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">PSD_phi</span><span class="p">)</span><span class="o">*</span><span class="n">del_f</span> <span class="p">)</span>
+        <span class="n">SH</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">N</span><span class="p">,</span><span class="n">N</span><span class="p">),</span><span class="n">dtype</span><span class="o">=</span><span class="s2">&quot;complex&quot;</span><span class="p">)</span>
+        <span class="c1"># loop over frequencies on this grid</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">3</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">3</span><span class="p">):</span>
+
+                <span class="n">SH</span> <span class="o">+=</span> <span class="n">cn</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="n">j</span><span class="p">]</span> <span class="o">*</span> <span class="n">numpy</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="mi">1</span><span class="n">j</span><span class="o">*</span><span class="mi">2</span><span class="o">*</span><span class="n">numpy</span><span class="o">.</span><span class="n">pi</span><span class="o">*</span><span class="p">(</span><span class="n">fx</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="n">j</span><span class="p">]</span><span class="o">*</span><span class="n">x</span><span class="o">+</span><span class="n">fy</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="n">j</span><span class="p">]</span><span class="o">*</span><span class="n">y</span><span class="p">))</span>
+
+        <span class="n">phs_lo</span> <span class="o">=</span> <span class="n">phs_lo</span> <span class="o">+</span> <span class="n">SH</span>
+        <span class="c1"># accumulate subharmonics</span>
+
+    <span class="n">phs_lo</span> <span class="o">=</span> <span class="n">phs_lo</span><span class="o">.</span><span class="n">real</span> <span class="o">-</span> <span class="n">phs_lo</span><span class="o">.</span><span class="n">real</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+
+    <span class="n">phs</span> <span class="o">=</span> <span class="n">phs_lo</span><span class="o">+</span><span class="n">phs_hi</span>
+
+    <span class="k">return</span> <span class="n">phs</span></div>
+
+
+
+<div class="viewcode-block" id="ft_phase_screen">
+<a class="viewcode-back" href="../../../turbulence.html#aotools.turbulence.phasescreen.ft_phase_screen">[docs]</a>
+<span class="k">def</span> <span class="nf">ft_phase_screen</span><span class="p">(</span><span class="n">r0</span><span class="p">,</span> <span class="n">N</span><span class="p">,</span> <span class="n">delta</span><span class="p">,</span> <span class="n">L0</span><span class="p">,</span> <span class="n">l0</span><span class="p">,</span> <span class="n">FFT</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Creates a random phase screen with Von Karmen statistics.</span>
+<span class="sd">    (Schmidt 2010)</span>
+<span class="sd">    </span>
+<span class="sd">    Parameters:</span>
+<span class="sd">        r0 (float): r0 parameter of scrn in metres</span>
+<span class="sd">        N (int): Size of phase scrn in pxls</span>
+<span class="sd">        delta (float): size in Metres of each pxl</span>
+<span class="sd">        L0 (float): Size of outer-scale in metres</span>
+<span class="sd">        l0 (float): inner scale in metres</span>
+<span class="sd">        seed (int, optional): seed for random number generator. If provided, </span>
+<span class="sd">            allows for deterministic screens  </span>
+
+<span class="sd">    .. note::</span>
+<span class="sd">        The phase screen is returned as a 2d array, with each element representing the phase </span>
+<span class="sd">        change in **radians**. This means that to obtain the physical phase distortion in nanometres, </span>
+<span class="sd">        it must be multiplied by (wavelength / (2*pi)), (where `wavellength` here is the same wavelength</span>
+<span class="sd">        in which r0 is given in the function arguments)</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        ndarray: numpy array representing phase screen in radians</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">delta</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">delta</span><span class="p">)</span>
+    <span class="n">r0</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">r0</span><span class="p">)</span>
+    <span class="n">L0</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">L0</span><span class="p">)</span>
+    <span class="n">l0</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">l0</span><span class="p">)</span>
+
+    <span class="n">R</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">default_rng</span><span class="p">(</span><span class="n">seed</span><span class="p">)</span>
+
+    <span class="n">del_f</span> <span class="o">=</span> <span class="mf">1.</span><span class="o">/</span><span class="p">(</span><span class="n">N</span><span class="o">*</span><span class="n">delta</span><span class="p">)</span>
+
+    <span class="n">fx</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="o">-</span><span class="n">N</span><span class="o">/</span><span class="mf">2.</span><span class="p">,</span> <span class="n">N</span><span class="o">/</span><span class="mf">2.</span><span class="p">)</span> <span class="o">*</span> <span class="n">del_f</span>
+
+    <span class="p">(</span><span class="n">fx</span><span class="p">,</span> <span class="n">fy</span><span class="p">)</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">meshgrid</span><span class="p">(</span><span class="n">fx</span><span class="p">,</span><span class="n">fx</span><span class="p">)</span>
+    <span class="n">f</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">fx</span><span class="o">**</span><span class="mf">2.</span> <span class="o">+</span> <span class="n">fy</span><span class="o">**</span><span class="mf">2.</span><span class="p">)</span>
+
+    <span class="n">fm</span> <span class="o">=</span> <span class="mf">5.92</span><span class="o">/</span><span class="n">l0</span><span class="o">/</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">numpy</span><span class="o">.</span><span class="n">pi</span><span class="p">)</span>
+    <span class="n">f0</span> <span class="o">=</span> <span class="mf">1.</span><span class="o">/</span><span class="n">L0</span>
+
+    <span class="n">PSD_phi</span> <span class="o">=</span> <span class="p">(</span><span class="mf">0.023</span><span class="o">*</span><span class="n">r0</span><span class="o">**</span><span class="p">(</span><span class="o">-</span><span class="mf">5.</span><span class="o">/</span><span class="mf">3.</span><span class="p">)</span> <span class="o">*</span> <span class="n">numpy</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="o">*</span><span class="p">((</span><span class="n">f</span><span class="o">/</span><span class="n">fm</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span><span class="p">))</span> <span class="o">/</span> <span class="p">(((</span><span class="n">f</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span><span class="n">f0</span><span class="o">**</span><span class="mi">2</span><span class="p">))</span><span class="o">**</span><span class="p">(</span><span class="mf">11.</span><span class="o">/</span><span class="mi">6</span><span class="p">)))</span>
+
+    <span class="n">PSD_phi</span><span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">N</span><span class="o">/</span><span class="mi">2</span><span class="p">),</span> <span class="nb">int</span><span class="p">(</span><span class="n">N</span><span class="o">/</span><span class="mi">2</span><span class="p">)]</span> <span class="o">=</span> <span class="mi">0</span>
+
+    <span class="n">cn</span> <span class="o">=</span> <span class="p">((</span><span class="n">R</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="n">N</span><span class="p">,</span> <span class="n">N</span><span class="p">))</span><span class="o">+</span><span class="mi">1</span><span class="n">j</span> <span class="o">*</span> <span class="n">R</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="n">N</span><span class="p">,</span> <span class="n">N</span><span class="p">)))</span> <span class="o">*</span> <span class="n">numpy</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">PSD_phi</span><span class="p">)</span><span class="o">*</span><span class="n">del_f</span><span class="p">)</span>
+
+    <span class="n">phs</span> <span class="o">=</span> <span class="n">ift2</span><span class="p">(</span><span class="n">cn</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">FFT</span><span class="p">)</span><span class="o">.</span><span class="n">real</span>
+
+    <span class="k">return</span> <span class="n">phs</span></div>
+
+
+
+<span class="k">def</span> <span class="nf">ift2</span><span class="p">(</span><span class="n">G</span><span class="p">,</span> <span class="n">delta_f</span><span class="p">,</span> <span class="n">FFT</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Wrapper for inverse fourier transform</span>
+
+<span class="sd">    Parameters:</span>
+<span class="sd">        G: data to transform</span>
+<span class="sd">        delta_f: pixel seperation</span>
+<span class="sd">        FFT (FFT object, optional): An accelerated FFT object</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">N</span> <span class="o">=</span> <span class="n">G</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+    <span class="k">if</span> <span class="n">FFT</span><span class="p">:</span>
+        <span class="n">g</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">fft</span><span class="o">.</span><span class="n">fftshift</span><span class="p">(</span><span class="n">FFT</span><span class="p">(</span><span class="n">numpy</span><span class="o">.</span><span class="n">fft</span><span class="o">.</span><span class="n">fftshift</span><span class="p">(</span><span class="n">G</span><span class="p">)))</span> <span class="o">*</span> <span class="p">(</span><span class="n">N</span> <span class="o">*</span> <span class="n">delta_f</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">g</span> <span class="o">=</span> <span class="n">fft</span><span class="o">.</span><span class="n">ifftshift</span><span class="p">(</span><span class="n">fft</span><span class="o">.</span><span class="n">ifft2</span><span class="p">(</span><span class="n">fft</span><span class="o">.</span><span class="n">fftshift</span><span class="p">(</span><span class="n">G</span><span class="p">)))</span> <span class="o">*</span> <span class="p">(</span><span class="n">N</span> <span class="o">*</span> <span class="n">delta_f</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span>
+
+    <span class="k">return</span> <span class="n">g</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2019, The Authors.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

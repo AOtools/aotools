@@ -1,0 +1,238 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>aotools.turbulence.temporal_ps &mdash; AOtools 0.1.dev477+g8f38ff7c1.d20260605 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=fa44fd50" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=867f5289"></script>
+      <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            AOtools
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../turbulence.html">Atmospheric Turbulence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../image_processing.html">Image Processing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../zernike.html">Circular Functions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../pupil.html">Telescope Pupils</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../wfs.html">Wavefront Sensors</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../opticalpropagation.html">Optical Propagation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../astronomy.html">Astronomical Functions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../fft.html">Normalised Fourier Transforms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../interpolation.html">Interpolation</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">AOtools</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">aotools.turbulence.temporal_ps</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for aotools.turbulence.temporal_ps</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Temporal Power Spectra</span>
+<span class="sd">----------------------</span>
+
+<span class="sd">Turbulence gradient temporal power spectra calculation and plotting</span>
+
+<span class="sd">:author: Andrew Reeves</span>
+<span class="sd">:date: September 2016</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span>
+<span class="kn">from</span> <span class="nn">matplotlib</span> <span class="kn">import</span> <span class="n">pyplot</span>
+<span class="kn">from</span> <span class="nn">scipy</span> <span class="kn">import</span> <span class="n">optimize</span>
+
+
+<div class="viewcode-block" id="calc_slope_temporalps">
+<a class="viewcode-back" href="../../../turbulence.html#aotools.turbulence.temporal_ps.calc_slope_temporalps">[docs]</a>
+<span class="k">def</span> <span class="nf">calc_slope_temporalps</span><span class="p">(</span><span class="n">slope_data</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Calculates the temporal power spectra of the loaded centroid data.</span>
+
+<span class="sd">    Calculates the Fourier transform over the number frames of the centroid</span>
+<span class="sd">    data, then returns the square of the  mean of all sub-apertures, for x</span>
+<span class="sd">    and y. This is a temporal power spectra of the slopes, and should adhere</span>
+<span class="sd">    to a -11/3 power law for the slopes in the wind direction, and -14/3 in</span>
+<span class="sd">    the direction tranverse to the wind direction. See Conan, 1995 for more.</span>
+
+<span class="sd">    The phase slope data should be split into X and Y components, with all X data first, then Y (or visa-versa).</span>
+
+<span class="sd">    Parameters:</span>
+<span class="sd">        slope_data (ndarray): 2-d array of shape (..., nFrames, nCentroids)</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        ndarray: The temporal power spectra of the data for X and Y components.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">n_frames</span> <span class="o">=</span> <span class="n">slope_data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span>
+
+    <span class="c1"># Only take half result, as FFT mirrors</span>
+    <span class="n">tps</span> <span class="o">=</span> <span class="nb">abs</span><span class="p">(</span><span class="n">numpy</span><span class="o">.</span><span class="n">fft</span><span class="o">.</span><span class="n">fft</span><span class="p">(</span><span class="n">slope_data</span><span class="p">,</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">2</span><span class="p">)[</span><span class="o">...</span><span class="p">,</span> <span class="p">:</span><span class="nb">int</span><span class="p">(</span><span class="n">n_frames</span><span class="o">/</span><span class="mi">2</span><span class="p">),</span> <span class="p">:])</span><span class="o">**</span><span class="mi">2</span>
+
+    <span class="c1"># Find mean across all sub-aps</span>
+    <span class="n">tps</span> <span class="o">=</span> <span class="p">(</span><span class="nb">abs</span><span class="p">(</span><span class="n">tps</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+    <span class="n">mean_tps</span> <span class="o">=</span> <span class="n">tps</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">tps_err</span> <span class="o">=</span> <span class="n">tps</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="o">/</span><span class="n">numpy</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">tps</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+
+    <span class="k">return</span> <span class="n">mean_tps</span><span class="p">,</span> <span class="n">tps_err</span></div>
+
+
+
+<div class="viewcode-block" id="get_tps_time_axis">
+<a class="viewcode-back" href="../../../turbulence.html#aotools.turbulence.temporal_ps.get_tps_time_axis">[docs]</a>
+<span class="k">def</span> <span class="nf">get_tps_time_axis</span><span class="p">(</span><span class="n">frame_rate</span><span class="p">,</span> <span class="n">n_frames</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Parameters:</span>
+<span class="sd">        frame_rate (float): Frame rate of detector observing slope gradients (Hz)</span>
+<span class="sd">        n_frames: (int): Number of frames used for temporal power spectrum</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        ndarray: Time values for temporal power spectra plots</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">t_vals</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">fft</span><span class="o">.</span><span class="n">fftfreq</span><span class="p">(</span><span class="n">n_frames</span><span class="p">,</span> <span class="mf">1.</span><span class="o">/</span><span class="n">frame_rate</span><span class="p">)[:</span><span class="nb">int</span><span class="p">(</span><span class="n">n_frames</span><span class="o">/</span><span class="mi">2</span><span class="p">)]</span>
+
+    <span class="k">return</span> <span class="n">t_vals</span></div>
+
+
+
+<div class="viewcode-block" id="plot_tps">
+<a class="viewcode-back" href="../../../turbulence.html#aotools.turbulence.temporal_ps.plot_tps">[docs]</a>
+<span class="k">def</span> <span class="nf">plot_tps</span><span class="p">(</span><span class="n">slope_data</span><span class="p">,</span> <span class="n">frame_rate</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Generates a plot of the temporal power spectrum/a for a data set of phase gradients</span>
+
+<span class="sd">    Parameters:</span>
+<span class="sd">        slope_data (ndarray):  2-d array of shape (..., nFrames, nCentroids)</span>
+<span class="sd">        frame_rate (float): Frame rate of detector observing slope gradients (Hz)</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        tuple: The computed temporal power spectrum/a, and the time axis data</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">n_frames</span> <span class="o">=</span> <span class="n">slope_data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span>
+
+    <span class="n">tps</span><span class="p">,</span> <span class="n">tps_err</span> <span class="o">=</span> <span class="n">calc_slope_temporalps</span><span class="p">(</span><span class="n">slope_data</span><span class="p">)</span>
+
+    <span class="n">t_axis_data</span> <span class="o">=</span> <span class="n">get_tps_time_axis</span><span class="p">(</span><span class="n">frame_rate</span><span class="p">,</span> <span class="n">n_frames</span><span class="p">)</span>
+
+    <span class="n">fig</span> <span class="o">=</span> <span class="n">pyplot</span><span class="o">.</span><span class="n">figure</span><span class="p">()</span>
+    <span class="n">ax</span> <span class="o">=</span> <span class="n">fig</span><span class="o">.</span><span class="n">add_subplot</span><span class="p">(</span><span class="mi">111</span><span class="p">)</span>
+
+    <span class="c1"># plot each power spectrum</span>
+    <span class="k">for</span> <span class="n">i_ps</span><span class="p">,</span> <span class="n">ps</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">tps</span><span class="p">):</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">loglog</span><span class="p">(</span><span class="n">t_axis_data</span><span class="p">,</span> <span class="n">ps</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;Spectrum </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">i_ps</span><span class="p">))</span>
+
+    <span class="n">ax</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s2">&quot;Frequency (Hz)&quot;</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s2">&quot;Power (arbitrary units)&quot;</span><span class="p">)</span>
+
+    <span class="n">pyplot</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+
+    <span class="k">return</span> <span class="n">tps</span><span class="p">,</span> <span class="n">tps_err</span><span class="p">,</span> <span class="n">t_axis_data</span></div>
+
+
+<div class="viewcode-block" id="fit_tps">
+<a class="viewcode-back" href="../../../turbulence.html#aotools.turbulence.temporal_ps.fit_tps">[docs]</a>
+<span class="k">def</span> <span class="nf">fit_tps</span><span class="p">(</span><span class="n">tps</span><span class="p">,</span> <span class="n">t_axis</span><span class="p">,</span> <span class="n">D</span><span class="p">,</span> <span class="n">V_guess</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">f_noise_guess</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">A_guess</span><span class="o">=</span><span class="mi">9</span><span class="p">,</span> <span class="n">tps_err</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">plot</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Runs minimization routines to get t0.</span>
+
+<span class="sd">    Parameters:</span>
+<span class="sd">        tps (ndarray): The temporal power spectrum to fit</span>
+<span class="sd">        axis (str): fit parallel (&#39;par&#39;) or perpendicular (&#39;per&#39;) to wind direction</span>
+<span class="sd">        D (float): (Sub-)Aperture diameter</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">plot</span><span class="p">:</span>
+        <span class="n">fig</span> <span class="o">=</span> <span class="n">pyplot</span><span class="o">.</span><span class="n">figure</span><span class="p">()</span>
+
+    <span class="n">opt_result</span> <span class="o">=</span> <span class="n">optimize</span><span class="o">.</span><span class="n">minimize</span><span class="p">(</span>
+            <span class="n">test_tps_fit_minimize_func</span><span class="p">,</span>
+            <span class="n">x0</span><span class="o">=</span><span class="p">(</span><span class="n">V_guess</span><span class="p">,</span> <span class="n">f_noise_guess</span><span class="p">,</span> <span class="n">A_guess</span><span class="p">),</span>
+            <span class="n">args</span><span class="o">=</span><span class="p">(</span><span class="n">tps</span><span class="p">,</span> <span class="n">t_axis</span><span class="p">,</span> <span class="n">D</span><span class="p">,</span> <span class="n">tps_err</span><span class="p">,</span> <span class="n">plot</span><span class="p">),</span>
+            <span class="n">method</span><span class="o">=</span><span class="s2">&quot;COBYLA&quot;</span><span class="p">)</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="n">opt_result</span><span class="p">)</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2019, The Authors.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
