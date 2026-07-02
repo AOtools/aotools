@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools", "setuptools-scm"]
+requires = ["setuptools"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -12,7 +12,7 @@ authors = [
     {email = "matthew.townson@northumbria.ac.uk"},
 ]
 requires-python = ">=3.10"
-dynamic = ["version"]
+version = "1.0.8"
 dependencies = [
     "numpy>=1.26.2",
     "scipy>=1.11.3",
@@ -36,6 +36,3 @@ Homepage = "https://github.com/AOtools/aotools"
 
 [tool.setuptools.packages.find]
 exclude = ["test*", "doc*"]
-
-[tool.setuptools_scm]
-version_file = "aotools/_version.py"
