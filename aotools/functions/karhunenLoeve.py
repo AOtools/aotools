@@ -27,7 +27,7 @@ For Kolmogorov statistics, e.g. ::
 
 import numpy as np
 import scipy
-from scipy.ndimage.interpolation import map_coordinates
+from scipy.ndimage import map_coordinates
 
 
 def rebin(a, newshape):

@@ -1,3 +1,0 @@
-include versioneer.py
-include aotools/_version.py
-include README.rst
