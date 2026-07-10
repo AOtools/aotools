@@ -191,7 +191,7 @@ class PhaseScreen(object):
 
         new_row.shape = (1, self.nx_size)
         return new_row
-
+    
     def add_row(self):
         """
         Adds a new row to the phase screen and removes old ones.
@@ -202,6 +202,23 @@ class PhaseScreen(object):
         self._scrn = numpy.append(new_row, self._scrn, axis=0)[:self.stencil_length, :self.nx_size]
 
         return self.scrn
+
+    def get_new_col(self):
+        random_data = self._R.normal(0, 1, size=self.nx_size)
+
+        stencil_data = self._scrn.T[(self.stencil_coords[:, 0], self.stencil_coords[:, 1])]
+        new_row = self.A_mat.dot(stencil_data) + self.B_mat.dot(random_data)
+
+        new_row.shape = (1, self.nx_size)
+        return new_row
+    
+    def add_col(self):
+        new_col = self.get_new_col()
+        self._scrn = numpy.append(new_col.T, self._scrn, axis=1)[:self.nx_size, :self.stencil_length]
+        return self.scrn
+
+
+
 
     @property
     def scrn(self):
